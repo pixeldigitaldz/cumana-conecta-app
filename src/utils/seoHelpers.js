@@ -204,46 +204,93 @@ export function getBusinessSlug(business) {
 }
 
 /**
- * Genera la URL canónica corta y limpia para compartir el comercio
+ * Genera un código especial ultra-corto (2 a 4 caracteres) para compartir el comercio
  * @param {Object} business
- * @returns {string} URL corta ej: https://cumanaconecta.com/?biz=econoquesos-cumana
+ * @param {Array} allList
+ * @returns {string} Código ultra-corto (ej. '0', '12', 'mrsc', 'eq')
+ */
+export function getBusinessShortCode(business, allList = []) {
+  if (!business) return '';
+  if (business.shortCode) return String(business.shortCode).toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  // 1. Si el ID es numérico corto ej: 'biz-000' -> '0', 'biz-012' -> '12' (máximo 4 dígitos)
+  if (business.id && /^biz-(\d{1,4})$/i.test(business.id)) {
+    return String(parseInt(business.id.match(/^biz-(\d{1,4})$/i)[1], 10));
+  }
+  if (business.id === 'biz-econoquesos' || business.slug === 'econoquesos-cumana') {
+    return 'eq';
+  }
+
+  // 2. Crear código a partir de las iniciales del nombre
+  // Ejemplo: "Multiservicio Rapid Service CA" -> "mrsc"
+  const cleanName = (business.name || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9\s]/g, '')
+    .trim();
+
+  const words = cleanName.split(/\s+/).filter(Boolean);
+
+  let candidate = '';
+  if (words.length >= 2) {
+    candidate = words
+      .map((w) => w[0].toLowerCase())
+      .join('')
+      .slice(0, 5);
+  }
+
+  // Si tiene una sola palabra o iniciales insuficientes (ej. "Farmatodo" -> "farm")
+  if (!candidate || candidate.length < 2) {
+    const rawWord = (words[0] || getBusinessSlug(business)).toLowerCase().replace(/[^a-z0-9]/g, '');
+    candidate = rawWord.slice(0, 4);
+  }
+
+  // Si hay lista, verificar que no colisione con otro comercio
+  if (Array.isArray(allList) && allList.length > 0) {
+    const collides = allList.some(
+      (other) =>
+        other.id !== business.id &&
+        ((other.shortCode && other.shortCode.toLowerCase() === candidate) ||
+         other.slug === candidate ||
+         other.id === candidate)
+    );
+    if (collides) {
+      const suffix = (business.id || '1').replace(/\D/g, '').slice(-2) || '2';
+      candidate = `${candidate.slice(0, 3)}${suffix}`;
+    }
+  }
+
+  return candidate || 'biz';
+}
+
+/**
+ * Genera la URL canónica ultra-corta y limpia para compartir el comercio
+ * @param {Object} business
+ * @returns {string} URL corta ej: https://cumanaconecta.com/?b=mrsc
  */
 export function getBusinessShareUrl(business) {
   if (!business) return '';
-  const slug = getBusinessSlug(business);
+  const code = getBusinessShortCode(business);
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://cumanaconecta.com';
-  return `${origin}/?biz=${slug}`;
+  return `${origin}/?b=${code}`;
 }
 
 /**
- * Genera un texto enriquecido para compartir un comercio por WhatsApp y redes sociales
- * con formato visual de alta conversión.
+ * Genera un texto limpio y conciso para WhatsApp
  * @param {Object} business
- * @returns {string} Texto formateado con emojis y enlaces
+ * @returns {string} Texto formateado listo para compartir
  */
 export function generateBusinessShareText(business) {
   if (!business) return '';
-  const { name, zone, address, activePromotion, paymentMethods = [], isFeatured } = business;
-
-  const vipBadge = isFeatured ? '👑 *[COMERCIO DESTACADO VIP]*\n' : '';
-  const promoLine = activePromotion ? `🔥 *Promoción Activa:* ${activePromotion}\n` : '';
-  const casheaLine = paymentMethods.includes('cashea') ? '🟰 *Acepta Pagos con Cashea en Cuotas*\n' : '';
+  const { name, zone } = business;
   const shareUrl = getBusinessShareUrl(business);
+  const loc = zone ? ` (${zone})` : '';
 
-  return (
-    `🌊 *${name}* — CumanáConecta\n` +
-    vipBadge +
-    `📍 *Ubicación:* ${zone} (${address})\n` +
-    promoLine +
-    casheaLine +
-    `✨ *Mira fotos, horarios, mapa interactivo y contacto directo aquí:*\n` +
-    `${shareUrl}\n\n` +
-    `_CumanáConecta — El Directorio Comercial de Cumaná, Sucre 🇻🇪_`
-  );
+  return `*${name}* — CumanáConecta${loc}\n${shareUrl}`;
 }
 
 /**
- * Resuelve un negocio desde la URL actual (parámetros ?biz=, ?negocio=, /negocio/:slug, etc.)
+ * Resuelve un negocio desde la URL actual (parámetros ?b=, ?c=, ?biz=, ?negocio=, /b/:code, /negocio/:slug, etc.)
  * @param {Array} allList Lista completa de comercios
  * @returns {Object|null}
  */
@@ -257,15 +304,16 @@ export function resolveBusinessFromUrl(allList = []) {
 
     // 1. Extraer identificador de los query params soportados
     let target =
+      url.searchParams.get('b') ||
+      url.searchParams.get('c') ||
       url.searchParams.get('biz') ||
       url.searchParams.get('negocio') ||
-      url.searchParams.get('b') ||
       url.searchParams.get('id');
 
-    // 2. Extraer identificador de rutas directas como /negocio/:slug o /biz/:slug
+    // 2. Extraer identificador de rutas directas como /b/:code, /negocio/:slug o /biz/:slug
     if (!target) {
       const pathname = window.location.pathname;
-      const pathMatch = pathname.match(/^\/(?:negocio|biz)\/([^\/?#]+)/i);
+      const pathMatch = pathname.match(/^\/(?:b|negocio|biz)\/([^\/?#]+)/i);
       if (pathMatch && pathMatch[1]) {
         target = pathMatch[1];
       }
@@ -274,6 +322,9 @@ export function resolveBusinessFromUrl(allList = []) {
     if (!target) return null;
 
     const rawTarget = decodeURIComponent(target).toLowerCase().trim();
+    // En caso de que WhatsApp o el navegador hayan concatenado texto con espacios a la URL:
+    const cleanToken = rawTarget.split(/[\s+\n\r]/)[0].trim();
+
     const normalizedTarget = rawTarget
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
@@ -281,22 +332,41 @@ export function resolveBusinessFromUrl(allList = []) {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
 
-    // 3. Búsqueda exacta por slug o ID
+    const normalizedToken = cleanToken
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/&/g, 'y')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    // 3. Búsqueda por código corto (getBusinessShortCode)
+    const byShortCode = allList.find((b) => {
+      const code = getBusinessShortCode(b, allList).toLowerCase();
+      return (
+        code === cleanToken ||
+        code === normalizedToken ||
+        code === rawTarget ||
+        code === normalizedTarget
+      );
+    });
+    if (byShortCode) return byShortCode;
+
+    // 4. Búsqueda exacta por slug o ID
     const bySlugOrId = allList.find(
       (b) =>
-        (b.slug && b.slug.toLowerCase() === rawTarget) ||
-        (b.id && b.id.toLowerCase() === rawTarget)
+        (b.slug && (b.slug.toLowerCase() === cleanToken || b.slug.toLowerCase() === rawTarget)) ||
+        (b.id && (b.id.toLowerCase() === cleanToken || b.id.toLowerCase() === rawTarget))
     );
     if (bySlugOrId) return bySlugOrId;
 
-    // 4. Búsqueda por slug generado
+    // 5. Búsqueda por slug generado
     const byGeneratedSlug = allList.find((b) => {
       const s = getBusinessSlug(b);
-      return s === normalizedTarget || s === rawTarget;
+      return s === normalizedToken || s === normalizedTarget || s === cleanToken || s === rawTarget;
     });
     if (byGeneratedSlug) return byGeneratedSlug;
 
-    // 5. Búsqueda por nombre exacto o normalizado (para compatibilidad con enlaces antiguos)
+    // 6. Búsqueda por nombre exacto o normalizado (para compatibilidad con enlaces antiguos)
     const byName = allList.find((b) => {
       if (!b.name) return false;
       const bName = b.name.toLowerCase().trim();
@@ -309,7 +379,7 @@ export function resolveBusinessFromUrl(allList = []) {
     });
     if (byName) return byName;
 
-    // 6. Búsqueda por aproximación o inclusión (por si WhatsApp recortó el enlace)
+    // 7. Búsqueda por aproximación o inclusión (por si WhatsApp recortó el enlace)
     return (
       allList.find((b) => {
         const bName = (b.name || '').toLowerCase();

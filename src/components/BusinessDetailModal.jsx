@@ -247,23 +247,23 @@ export default function BusinessDetailModal({ business, onClose }) {
 
   const handleShare = async () => {
     const shareUrl = getBusinessShareUrl(business);
-    const richText = generateBusinessShareText(business);
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${name} — CumanáConecta (Cumaná, Sucre)`,
-          text: richText,
+          title: `${name} — CumanáConecta`,
           url: shareUrl,
         });
         return;
-      } catch {}
+      } catch (err) {
+        if (err?.name === 'AbortError') return;
+      }
     }
     
     try {
-      await navigator.clipboard.writeText(richText);
+      await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
-      toast.copy(`¡Ficha y enlace de ${name} copiados! Listo para compartir en WhatsApp o redes.`);
+      toast.copy(`¡Enlace copiado! ${shareUrl}`);
       setTimeout(() => setCopied(false), 2500);
     } catch {
       handleCopyLink();

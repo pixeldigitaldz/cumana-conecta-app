@@ -132,18 +132,16 @@ export default function BusinessCard({
   const handleShare = (e) => {
     e.stopPropagation();
     const shareUrl = getBusinessShareUrl(business);
-    const shareText = generateBusinessShareText(business);
     if (navigator.share) {
       navigator
         .share({
-          title: `${name} — CumanáConecta (Cumaná, Sucre)`,
-          text: shareText,
+          title: `${name} — CumanáConecta`,
           url: shareUrl,
         })
         .catch(() => {});
     } else if (navigator.clipboard) {
-      navigator.clipboard.writeText(shareText);
-      toast.copy(`¡Ficha y enlace de ${name} copiados! Listo para compartir.`);
+      navigator.clipboard.writeText(shareUrl);
+      toast.copy(`¡Enlace corto de ${name} copiado al portapapeles!`);
     }
   };
 

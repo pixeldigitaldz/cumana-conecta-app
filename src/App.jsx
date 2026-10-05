@@ -23,7 +23,7 @@ import {
 } from './data/mockBusinessData';
 import { adminStore } from './store/adminStore.js';
 import { isAuthenticated } from './store/authStore.js';
-import { generateDirectoryItemListSchema, getBusinessSlug, resolveBusinessFromUrl } from './utils/seoHelpers';
+import { generateDirectoryItemListSchema, getBusinessSlug, getBusinessShortCode, resolveBusinessFromUrl } from './utils/seoHelpers';
 import { useTheme } from './context/ThemeContext';
 import { useToast } from './context/ToastContext';
 import {
@@ -208,11 +208,12 @@ export default function App() {
     }
     setSelectedBusiness(biz);
     if (biz) {
-      const slug = getBusinessSlug(biz);
+      const code = getBusinessShortCode(biz);
       const url = new URL(window.location.href);
-      url.searchParams.set('biz', slug);
+      url.searchParams.set('b', code);
+      url.searchParams.delete('biz');
       url.searchParams.delete('negocio');
-      url.searchParams.delete('b');
+      url.searchParams.delete('c');
       window.history.pushState(null, '', `${url.pathname}?${url.searchParams.toString()}`);
     }
   }, [selectedBrand]);
@@ -221,11 +222,12 @@ export default function App() {
     setSelectedBusiness(null);
     try {
       const url = new URL(window.location.href);
+      url.searchParams.delete('b');
+      url.searchParams.delete('c');
       url.searchParams.delete('biz');
       url.searchParams.delete('negocio');
-      url.searchParams.delete('b');
       let newPath = url.pathname;
-      if (newPath.startsWith('/negocio') || newPath.startsWith('/biz')) {
+      if (newPath.startsWith('/negocio') || newPath.startsWith('/biz') || newPath.startsWith('/b/')) {
         newPath = '/directorio';
       }
       const clean = `${newPath}${url.search ? url.search : ''}`;

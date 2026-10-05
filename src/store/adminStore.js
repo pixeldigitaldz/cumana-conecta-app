@@ -5,6 +5,7 @@
  */
 
 import { businesses as initialBusinesses, CATEGORIES as initialCategories, CUMANA_ZONES as initialZones } from '../data/mockBusinessData.js';
+import { getBusinessShortCode } from '../utils/seoHelpers.js';
 
 // ── Claves de localStorage ────────────────────────────────────────────────────
 const KEYS = {
@@ -260,10 +261,12 @@ export const adminStore = {
   },
   addBusiness(biz) {
     const list = this.getBusinesses();
+    const shortCode = biz.shortCode || getBusinessShortCode(biz, list);
     const newBiz = {
       ...biz,
       id: `biz-${Date.now()}`,
       slug: biz.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+      shortCode,
       createdAt: new Date().toISOString(),
       status: biz.status || 'pending',
       isVerified: biz.isVerified || false,
