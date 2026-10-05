@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Share2, Send, Copy, Check } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
+import { getBusinessShareUrl } from '../utils/seoHelpers';
 
 /**
  * Icono SVG oficial de X (Twitter)
@@ -36,9 +37,8 @@ export default function BusinessShareSection({ business, isOpen = true }) {
     id,
   } = business || {};
 
-  // Formato del enlace sin '#' residual
-  const shareIdentifier = slug || id || encodeURIComponent(name);
-  const cleanUrl = `${window.location.origin}/?negocio=${shareIdentifier}`;
+  // URL corta y limpia oficial
+  const cleanUrl = getBusinessShareUrl(business);
 
   // Eslogan o texto representativo
   const slogan = activePromotion

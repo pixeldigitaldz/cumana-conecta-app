@@ -23,7 +23,7 @@ import {
 } from './data/mockBusinessData';
 import { adminStore } from './store/adminStore.js';
 import { isAuthenticated } from './store/authStore.js';
-import { generateDirectoryItemListSchema } from './utils/seoHelpers';
+import { generateDirectoryItemListSchema, getBusinessSlug, resolveBusinessFromUrl } from './utils/seoHelpers';
 import { useTheme } from './context/ThemeContext';
 import { useToast } from './context/ToastContext';
 import {
@@ -66,6 +66,9 @@ function getPageFromUrl() {
   ) {
     return 'marca';
   }
+  if (path.startsWith('/negocio') || path.startsWith('/biz')) {
+    return 'directorio';
+  }
   return 'home';
 }
 
@@ -99,13 +102,24 @@ export default function App() {
   const [sortBy, setSortBy] = useState('featured');
   const [viewMode, setViewMode] = useState('grid');
 
-  const [selectedBusiness, setSelectedBusiness] = useState(null);
+  const [selectedBusiness, setSelectedBusiness] = useState(() => {
+    try {
+      const all = getBusinesses();
+      const found = resolveBusinessFromUrl(all);
+      return found && !found.isMultiBranch ? found : null;
+    } catch {
+      return null;
+    }
+  });
   const [selectedBrand, setSelectedBrand] = useState(() => {
     try {
+      const allBiz = getBusinesses();
+      const found = resolveBusinessFromUrl(allBiz);
+      if (found && found.isMultiBranch) return found;
+
       const path = window.location.pathname.toLowerCase();
       if (path.startsWith('/marca') || path.startsWith('/cadena')) {
         const slug = path.replace(/^\/(marca|cadena)\//, '').replace(/\/+$/, '');
-        const allBiz = getBusinesses();
         return (
           allBiz.find((b) => b.slug === slug || b.id === slug) ||
           allBiz.find((b) => b.isMultiBranch) ||
@@ -145,6 +159,20 @@ export default function App() {
     const handleLocationChange = () => {
       const page = cleanHashFromUrl();
       setCurrentPage(page);
+
+      // Sincronizar negocio si la URL cambió o se usó atrás/adelante en el navegador
+      const all = getBusinesses();
+      const found = resolveBusinessFromUrl(all);
+      if (found) {
+        if (found.isMultiBranch) {
+          setSelectedBrand(found);
+          setCurrentPage('marca');
+        } else {
+          setSelectedBusiness(found);
+        }
+      } else {
+        setSelectedBusiness(null);
+      }
     };
 
     window.addEventListener('popstate', handleLocationChange);
@@ -179,7 +207,31 @@ export default function App() {
       return;
     }
     setSelectedBusiness(biz);
+    if (biz) {
+      const slug = getBusinessSlug(biz);
+      const url = new URL(window.location.href);
+      url.searchParams.set('biz', slug);
+      url.searchParams.delete('negocio');
+      url.searchParams.delete('b');
+      window.history.pushState(null, '', `${url.pathname}?${url.searchParams.toString()}`);
+    }
   }, [selectedBrand]);
+
+  const handleCloseBusinessModal = useCallback(() => {
+    setSelectedBusiness(null);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('biz');
+      url.searchParams.delete('negocio');
+      url.searchParams.delete('b');
+      let newPath = url.pathname;
+      if (newPath.startsWith('/negocio') || newPath.startsWith('/biz')) {
+        newPath = '/directorio';
+      }
+      const clean = `${newPath}${url.search ? url.search : ''}`;
+      window.history.replaceState(null, '', clean);
+    } catch {}
+  }, []);
 
   // Simula la carga inicial de datos con efecto de Skeleton Screen y resolución de Deep Links
   useEffect(() => {
@@ -204,26 +256,16 @@ export default function App() {
         console.error('Error resolving brand URL:', err);
       }
 
-      // Resolver negocio compartido por URL (WhatsApp / Redes)
+      // Resolver negocio compartido por URL (WhatsApp / Redes / Enlaces directos)
       try {
-        const fullUrl = window.location.href;
-        const match = fullUrl.match(/[?&]negocio=([^&#]+)/i);
-        if (match && match[1]) {
-          const targetName = decodeURIComponent(match[1]).toLowerCase().trim();
-          const allList = getBusinesses();
-          const matchedBusiness = allList.find(
-            (b) => b.name.toLowerCase().trim() === targetName ||
-                   b.name.toLowerCase().includes(targetName) ||
-                   b.id === targetName ||
-                   b.slug === targetName
-          );
-          if (matchedBusiness) {
-            if (matchedBusiness.isMultiBranch) {
-              setSelectedBrand(matchedBusiness);
-              setCurrentPage('marca');
-            } else {
-              setSelectedBusiness(matchedBusiness);
-            }
+        const allList = getBusinesses();
+        const matchedBusiness = resolveBusinessFromUrl(allList);
+        if (matchedBusiness) {
+          if (matchedBusiness.isMultiBranch) {
+            setSelectedBrand(matchedBusiness);
+            setCurrentPage('marca');
+          } else {
+            setSelectedBusiness(matchedBusiness);
           }
         }
       } catch (err) {
@@ -433,9 +475,9 @@ export default function App() {
             <BusinessDetailModal
               key={`business-detail-${selectedBusiness.id}`}
               business={selectedBusiness}
-              onClose={() => setSelectedBusiness(null)}
+              onClose={handleCloseBusinessModal}
               onOpenEmergency={() => {
-                setSelectedBusiness(null);
+                handleCloseBusinessModal();
                 setEmergencyModalOpen(true);
               }}
             />
@@ -781,9 +823,9 @@ export default function App() {
           <BusinessDetailModal
             key={`business-detail-${selectedBusiness.id}`}
             business={selectedBusiness}
-            onClose={() => setSelectedBusiness(null)}
+            onClose={handleCloseBusinessModal}
             onOpenEmergency={() => {
-              setSelectedBusiness(null);
+              handleCloseBusinessModal();
               setEmergencyModalOpen(true);
             }}
           />

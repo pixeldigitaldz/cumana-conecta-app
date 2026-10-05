@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { buildWhatsAppUrl, PAYMENT_METHODS_CONFIG, isBusinessOpen } from "../data/mockBusinessData";
-import { generateBusinessShareText } from "../utils/seoHelpers";
+import { generateBusinessShareText, getBusinessShareUrl } from "../utils/seoHelpers";
 import { useTheme } from "../context/ThemeContext";
 import { useToast } from "../context/ToastContext";
 import { WhatsAppIcon, CasheaIcon } from "./SocialIcons";
@@ -131,10 +131,7 @@ export default function BusinessCard({
 
   const handleShare = (e) => {
     e.stopPropagation();
-    const shareUrl =
-      typeof window !== "undefined"
-        ? `${window.location.origin}/directorio?negocio=${encodeURIComponent(name)}`
-        : `https://cumanaconecta.com/directorio?negocio=${encodeURIComponent(name)}`;
+    const shareUrl = getBusinessShareUrl(business);
     const shareText = generateBusinessShareText(business);
     if (navigator.share) {
       navigator
@@ -229,6 +226,14 @@ export default function BusinessCard({
               >
                 {logoUrl && (logoUrl.startsWith("http") || logoUrl.startsWith("/")) ? (
                   <img src={logoUrl} alt={`Logo de ${name}`} className="w-full h-full object-cover" />
+                ) : logoUrl ? (
+                  <div
+                    className={`w-full h-full flex items-center justify-center text-2xl select-none ${
+                      isDark ? "bg-[#22242c]" : "bg-slate-100"
+                    }`}
+                  >
+                    {logoUrl}
+                  </div>
                 ) : photos && photos.length > 0 ? (
                   <img src={photos[0]} alt={`Foto de ${name}`} className="w-full h-full object-cover" />
                 ) : (
@@ -237,7 +242,7 @@ export default function BusinessCard({
                       isDark ? "bg-[#22242c] text-amber-400" : "bg-slate-100 text-slate-700"
                     }`}
                   >
-                    {logoUrl || name.slice(0, 2).toUpperCase()}
+                    {name.slice(0, 2).toUpperCase()}
                   </div>
                 )}
               </div>

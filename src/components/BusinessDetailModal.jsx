@@ -40,7 +40,7 @@ import {
   getYoutubeEmbedUrl,
   formatSocialUrl,
 } from '../data/mockBusinessData';
-import { updatePageSEO, generateBusinessShareText } from '../utils/seoHelpers';
+import { updatePageSEO, generateBusinessShareText, getBusinessShareUrl } from '../utils/seoHelpers';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import CasheaCalculatorWidget from './CasheaCalculatorWidget';
@@ -154,11 +154,9 @@ export default function BusinessDetailModal({ business, onClose }) {
     };
   }, [business, onClose]);
 
-  // Construir URL precisa del comercio para el QR
+  // Construir URL precisa y corta del comercio para el QR
   const businessName = business?.name || '';
-  const businessQrUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/directorio?negocio=${encodeURIComponent(businessName)}`
-    : `https://cumanaconecta.com/directorio?negocio=${encodeURIComponent(businessName)}`;
+  const businessQrUrl = getBusinessShareUrl(business);
 
   // Generación reactiva del código QR en alta definición
   useEffect(() => {
@@ -248,9 +246,7 @@ export default function BusinessDetailModal({ business, onClose }) {
       ];
 
   const handleShare = async () => {
-    const shareUrl = typeof window !== 'undefined'
-      ? `${window.location.origin}/directorio?negocio=${encodeURIComponent(name)}`
-      : `https://cumanaconecta.com/directorio?negocio=${encodeURIComponent(name)}`;
+    const shareUrl = getBusinessShareUrl(business);
     const richText = generateBusinessShareText(business);
 
     if (navigator.share) {
@@ -437,9 +433,7 @@ export default function BusinessDetailModal({ business, onClose }) {
   };
 
   const handleCopyLink = async () => {
-    const shareUrl = typeof window !== 'undefined'
-      ? `${window.location.origin}/directorio?negocio=${encodeURIComponent(name)}`
-      : `https://cumanaconecta.com/directorio?negocio=${encodeURIComponent(name)}`;
+    const shareUrl = getBusinessShareUrl(business);
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
@@ -698,11 +692,17 @@ export default function BusinessDetailModal({ business, onClose }) {
               isDark ? 'border-[#282a32]' : 'border-slate-100'
             }`}>
               <div
-                className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center text-4xl flex-shrink-0 border shadow-2xs transition-transform hover:scale-105 ${
+                className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center text-4xl flex-shrink-0 border shadow-2xs transition-transform hover:scale-105 overflow-hidden ${
                   isDark ? 'bg-[#22242c] border-[#323640]' : 'bg-[#f2f4f6] border-[#bfc8cc]'
                 }`}
               >
-                {logoUrl || <Store size={36} className={isDark ? 'text-amber-400' : 'text-[#004655]'} />}
+                {logoUrl && (logoUrl.startsWith('http') || logoUrl.startsWith('/')) ? (
+                  <img src={logoUrl} alt={name} className="w-full h-full object-cover" />
+                ) : logoUrl ? (
+                  logoUrl
+                ) : (
+                  <Store size={36} className={isDark ? 'text-amber-400' : 'text-[#004655]'} />
+                )}
               </div>
 
               {/* Indicador de compartido */}
@@ -723,8 +723,12 @@ export default function BusinessDetailModal({ business, onClose }) {
                 : 'bg-gradient-to-r from-amber-50 via-orange-50 to-amber-100/60 border-amber-300 text-slate-900'
             }`}>
               <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-lg shadow-md flex-shrink-0">
-                  {business.logoUrl || '🧀'}
+                <div className="w-11 h-11 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-lg shadow-md flex-shrink-0 overflow-hidden">
+                  {business.logoUrl && (business.logoUrl.startsWith('http') || business.logoUrl.startsWith('/')) ? (
+                    <img src={business.logoUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    business.logoUrl || <Store size={22} className="text-slate-950" />
+                  )}
                 </div>
                 <div>
                   <div className="flex items-center gap-2 mb-0.5">

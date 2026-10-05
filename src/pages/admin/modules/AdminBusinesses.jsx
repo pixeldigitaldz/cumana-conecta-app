@@ -30,6 +30,7 @@ import {
   Building2,
   ShoppingBag,
   Sparkles,
+  Smile,
 } from 'lucide-react';
 import {
   WhatsAppIcon,
@@ -200,9 +201,15 @@ function BusinessForm({ initial, categories, zones, onSave, onClose }) {
   const [newCatName, setNewCatName] = useState('');
   const [newCatEmoji, setNewCatEmoji] = useState('🏪');
   const QUICK_EMOJIS = ['🏪', '🛒', '🍔', '🍰', '☕', '💊', '🏥', '🔧', '🚗', '📚', '💡', '🏨', '✂️', '🐾', '🌊', '⚡'];
+  const POPULAR_BUSINESS_EMOJIS = [
+    '🏪', '🛒', '🍽️', '🍔', '🍕', '🍰', '☕', '💊', '🏥', '🔬', '🦷', '🔧', '🚗', '💻', '📱', '💈', '✂️', '📚', '🏨', '🐾', '⚡', '🥩', '🐟', '🧀', '🥐', '👗', '👟', '🎨', '🏋️', '🍦', '🛠️', '🌮'
+  ];
 
   const [form, setForm] = useState(() => {
     const merged = { ...EMPTY_FORM, ...initial };
+    if (initial?.id) {
+      merged.logoUrl = initial.logoUrl !== undefined && initial.logoUrl !== null ? initial.logoUrl : '';
+    }
     if (merged.schedule && typeof merged.schedule === 'object' && !merged.scheduleText) {
       merged.scheduleText = Object.entries(merged.schedule)
         .map(([k, v]) => `${k}: ${v}`)
@@ -566,29 +573,133 @@ function BusinessForm({ initial, categories, zones, onSave, onClose }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1 font-['Inter']">
-                  Horario de Atención Semanal
-                </label>
-                <input
-                  className={inputClass()}
-                  value={form.scheduleText || ''}
-                  onChange={(e) => set('scheduleText', e.target.value)}
-                  placeholder="Ej. Lun - Vie: 8:00 AM - 6:00 PM | Sáb: 8:00 AM - 2:00 PM"
-                />
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1 font-['Inter']">
+                Horario de Atención Semanal
+              </label>
+              <input
+                className={inputClass()}
+                value={form.scheduleText || ''}
+                onChange={(e) => set('scheduleText', e.target.value)}
+                placeholder="Ej. Lun - Vie: 8:00 AM - 6:00 PM | Sáb: 8:00 AM - 2:00 PM"
+              />
+            </div>
+
+            {/* Icono o Emoji Representativo */}
+            <div className="p-4 rounded-2xl border border-slate-200/90 bg-slate-50/60 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 font-['Inter'] flex items-center gap-1.5">
+                    <Smile size={14} className="text-teal-600" />
+                    <span>Icono o Emoji Representativo</span>
+                  </label>
+                  <p className="text-[11px] text-slate-500 font-['Inter']">
+                    Se muestra en las tarjetas de búsqueda, directorio y encabezado del comercio.
+                  </p>
+                </div>
+                {form.logoUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => set('logoUrl', '')}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200/60 transition cursor-pointer"
+                    title="Quitar icono para no mostrar ningún emoji"
+                  >
+                    <Trash2 size={13} />
+                    <span>Quitar icono</span>
+                  </button>
+                ) : (
+                  <span className="text-[11px] font-semibold text-slate-500 bg-slate-200/70 px-2 py-0.5 rounded-md">
+                    Sin icono (Iniciales activas)
+                  </span>
+                )}
               </div>
 
+              {/* Input + Preview */}
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-12 h-12 rounded-xl border border-slate-200 bg-white flex items-center justify-center flex-shrink-0 shadow-xs overflow-hidden"
+                  title="Vista previa del icono"
+                >
+                  {form.logoUrl && (form.logoUrl.startsWith('http') || form.logoUrl.startsWith('/')) ? (
+                    <img src={form.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                  ) : form.logoUrl ? (
+                    <span className="text-2xl select-none">{form.logoUrl}</span>
+                  ) : (
+                    <span className="text-xs font-black text-teal-700 bg-teal-50 w-full h-full flex items-center justify-center select-none">
+                      {form.name ? form.name.slice(0, 2).toUpperCase() : 'CC'}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex-1 relative">
+                  <input
+                    className={`${inputClass()} pr-8`}
+                    value={form.logoUrl || ''}
+                    onChange={(e) => set('logoUrl', e.target.value)}
+                    placeholder="Escribe o pega un emoji o URL (o déjalo vacío)..."
+                  />
+                  {form.logoUrl && (
+                    <button
+                      type="button"
+                      onClick={() => set('logoUrl', '')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-md cursor-pointer"
+                      title="Borrar icono"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Selector Rápido de Emojis */}
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1 font-['Inter']">
-                  Icono o Emoji Representativo
-                </label>
-                <input
-                  className={inputClass()}
-                  value={form.logoUrl || '🏪'}
-                  onChange={(e) => set('logoUrl', e.target.value)}
-                  placeholder="🍽️, 💊, 🏪, 🍦, 💈"
-                />
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] font-semibold text-slate-600 font-['Inter']">
+                    Selecciona un emoji para asignarlo o cambiarlo:
+                  </span>
+                  {form.logoUrl && (
+                    <button
+                      type="button"
+                      onClick={() => set('logoUrl', '')}
+                      className="text-[11px] font-medium text-slate-500 hover:text-rose-600 underline cursor-pointer"
+                    >
+                      Dejar sin emoji
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 p-2 rounded-xl bg-white border border-slate-200/80 max-h-28 overflow-y-auto">
+                  <button
+                    type="button"
+                    onClick={() => set('logoUrl', '')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition cursor-pointer flex items-center gap-1 ${
+                      !form.logoUrl
+                        ? 'bg-teal-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                    title="No mostrar emoji (usar iniciales)"
+                  >
+                    <span>🚫 Sin icono</span>
+                  </button>
+                  {POPULAR_BUSINESS_EMOJIS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => set('logoUrl', emoji)}
+                      className={`w-8 h-8 rounded-lg text-lg flex items-center justify-center transition cursor-pointer hover:scale-115 active:scale-95 ${
+                        form.logoUrl === emoji
+                          ? 'bg-teal-100 border-2 border-teal-500 shadow-xs'
+                          : 'hover:bg-slate-100'
+                      }`}
+                      title={`Seleccionar ${emoji}`}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+                <span className="text-[10px] text-slate-400 mt-1 block">
+                  💡 Haz clic en cualquier emoji para asignarlo al instante, o pulsa "Sin icono" / "Quitar icono" si no quieres que aparezca ninguno.
+                </span>
               </div>
             </div>
 
@@ -1638,8 +1749,16 @@ export default function AdminBusinesses() {
                     {/* Comercio (Icono/Emoji + Nombre + Rubro) */}
                     <td className="py-4 px-5">
                       <div className="flex items-center gap-3.5">
-                        <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-xl flex-shrink-0 shadow-2xs">
-                          {biz.logoUrl || '🏪'}
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-xl flex-shrink-0 shadow-2xs overflow-hidden">
+                          {biz.logoUrl && (biz.logoUrl.startsWith('http') || biz.logoUrl.startsWith('/')) ? (
+                            <img src={biz.logoUrl} alt="" className="w-full h-full object-cover" />
+                          ) : biz.logoUrl ? (
+                            biz.logoUrl
+                          ) : (
+                            <span className="text-xs font-bold text-slate-500">
+                              {biz.name ? biz.name.slice(0, 2).toUpperCase() : 'CC'}
+                            </span>
+                          )}
                         </div>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">

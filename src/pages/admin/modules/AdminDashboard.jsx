@@ -50,8 +50,14 @@ function StatCard({ icon: Icon, label, value, color, bg }) {
 function PendingRow({ biz, onApprove, onReject }) {
   return (
     <div className="flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-slate-50 border border-transparent hover:border-slate-100">
-      <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-lg flex-shrink-0">
-        {biz.logoUrl || '🏪'}
+      <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-lg flex-shrink-0 overflow-hidden">
+        {biz.logoUrl && (biz.logoUrl.startsWith('http') || biz.logoUrl.startsWith('/')) ? (
+          <img src={biz.logoUrl} alt="" className="w-full h-full object-cover" />
+        ) : biz.logoUrl ? (
+          biz.logoUrl
+        ) : (
+          <span className="text-xs font-bold text-slate-500">{biz.name ? biz.name.slice(0, 2).toUpperCase() : 'CC'}</span>
+        )}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-slate-800 truncate font-['Inter']">{biz.name}</p>

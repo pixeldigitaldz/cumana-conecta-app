@@ -182,6 +182,40 @@ export function generateDirectoryItemListSchema(businessesList = []) {
 }
 
 /**
+ * Obtiene el slug limpio y normalizado para URLs amigables
+ * @param {Object} business
+ * @returns {string} Slug limpio sin tildes ni caracteres extraños
+ */
+export function getBusinessSlug(business) {
+  if (!business) return '';
+  if (business.slug && typeof business.slug === 'string') {
+    return business.slug.trim();
+  }
+  if (business.id && typeof business.id === 'string' && !business.id.startsWith('biz-')) {
+    return business.id.trim();
+  }
+  return (business.name || business.id || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/&/g, 'y')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/**
+ * Genera la URL canónica corta y limpia para compartir el comercio
+ * @param {Object} business
+ * @returns {string} URL corta ej: https://cumanaconecta.com/?biz=econoquesos-cumana
+ */
+export function getBusinessShareUrl(business) {
+  if (!business) return '';
+  const slug = getBusinessSlug(business);
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://cumanaconecta.com';
+  return `${origin}/?biz=${slug}`;
+}
+
+/**
  * Genera un texto enriquecido para compartir un comercio por WhatsApp y redes sociales
  * con formato visual de alta conversión.
  * @param {Object} business
@@ -194,10 +228,7 @@ export function generateBusinessShareText(business) {
   const vipBadge = isFeatured ? '👑 *[COMERCIO DESTACADO VIP]*\n' : '';
   const promoLine = activePromotion ? `🔥 *Promoción Activa:* ${activePromotion}\n` : '';
   const casheaLine = paymentMethods.includes('cashea') ? '🟰 *Acepta Pagos con Cashea en Cuotas*\n' : '';
-  const businessIdentifier = business.slug || business.id || name;
-  const shareUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/?negocio=${encodeURIComponent(businessIdentifier)}`
-    : `https://cumanaconecta.com/?negocio=${encodeURIComponent(businessIdentifier)}`;
+  const shareUrl = getBusinessShareUrl(business);
 
   return (
     `🌊 *${name}* — CumanáConecta\n` +
@@ -210,4 +241,91 @@ export function generateBusinessShareText(business) {
     `_CumanáConecta — El Directorio Comercial de Cumaná, Sucre 🇻🇪_`
   );
 }
+
+/**
+ * Resuelve un negocio desde la URL actual (parámetros ?biz=, ?negocio=, /negocio/:slug, etc.)
+ * @param {Array} allList Lista completa de comercios
+ * @returns {Object|null}
+ */
+export function resolveBusinessFromUrl(allList = []) {
+  if (typeof window === 'undefined' || !Array.isArray(allList) || allList.length === 0) {
+    return null;
+  }
+
+  try {
+    const url = new URL(window.location.href);
+
+    // 1. Extraer identificador de los query params soportados
+    let target =
+      url.searchParams.get('biz') ||
+      url.searchParams.get('negocio') ||
+      url.searchParams.get('b') ||
+      url.searchParams.get('id');
+
+    // 2. Extraer identificador de rutas directas como /negocio/:slug o /biz/:slug
+    if (!target) {
+      const pathname = window.location.pathname;
+      const pathMatch = pathname.match(/^\/(?:negocio|biz)\/([^\/?#]+)/i);
+      if (pathMatch && pathMatch[1]) {
+        target = pathMatch[1];
+      }
+    }
+
+    if (!target) return null;
+
+    const rawTarget = decodeURIComponent(target).toLowerCase().trim();
+    const normalizedTarget = rawTarget
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/&/g, 'y')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    // 3. Búsqueda exacta por slug o ID
+    const bySlugOrId = allList.find(
+      (b) =>
+        (b.slug && b.slug.toLowerCase() === rawTarget) ||
+        (b.id && b.id.toLowerCase() === rawTarget)
+    );
+    if (bySlugOrId) return bySlugOrId;
+
+    // 4. Búsqueda por slug generado
+    const byGeneratedSlug = allList.find((b) => {
+      const s = getBusinessSlug(b);
+      return s === normalizedTarget || s === rawTarget;
+    });
+    if (byGeneratedSlug) return byGeneratedSlug;
+
+    // 5. Búsqueda por nombre exacto o normalizado (para compatibilidad con enlaces antiguos)
+    const byName = allList.find((b) => {
+      if (!b.name) return false;
+      const bName = b.name.toLowerCase().trim();
+      if (bName === rawTarget) return true;
+      const bNorm = bName
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+      return bNorm === normalizedTarget || bNorm === rawTarget;
+    });
+    if (byName) return byName;
+
+    // 6. Búsqueda por aproximación o inclusión (por si WhatsApp recortó el enlace)
+    return (
+      allList.find((b) => {
+        const bName = (b.name || '').toLowerCase();
+        const bNorm = bName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        return (
+          bName.includes(rawTarget) ||
+          rawTarget.includes(bName) ||
+          bNorm.includes(normalizedTarget) ||
+          normalizedTarget.includes(bNorm)
+        );
+      }) || null
+    );
+  } catch (err) {
+    console.error('Error resolving business from URL:', err);
+    return null;
+  }
+}
+
 
