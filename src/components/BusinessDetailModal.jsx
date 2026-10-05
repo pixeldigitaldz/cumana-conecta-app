@@ -715,6 +715,48 @@ export default function BusinessDetailModal({ business, onClose }) {
             </div>
           </div>
 
+          {/* ─── Banner de Cadena Multi-Sede Oficial ─── */}
+          {business?.isMultiBranch && (
+            <div className={`w-full p-4 sm:p-5 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm transition-all animate-fade-in-up stagger-1 ${
+              isDark
+                ? 'bg-gradient-to-r from-amber-950/40 via-[#1e1c18] to-amber-950/20 border-amber-400/40 text-amber-200'
+                : 'bg-gradient-to-r from-amber-50 via-orange-50 to-amber-100/60 border-amber-300 text-slate-900'
+            }`}>
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-lg shadow-md flex-shrink-0">
+                  {business.logoUrl || '🧀'}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-amber-400 text-slate-950">CADENA MULTI-SEDE</span>
+                    <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                      {business.branchCount || business.branches?.length || 3} Sedes Físicas en Cumaná
+                    </span>
+                  </div>
+                  <h4 className="font-['Outfit'] font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">
+                    Conoce las 3 sucursales, afiche semanal y precios en mostrador
+                  </h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                    Sede Central (Blanco Fombona), Plaza (Cancamure) y Express (Santa Rosa). Acepta Cashea Línea Cotidiana.
+                  </p>
+                </div>
+              </div>
+              <a
+                href={`/cadena/${business.slug || 'econoquesos-cumana'}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onClose();
+                  window.history.pushState(null, '', `/marca/${business.slug || 'econoquesos-cumana'}`);
+                  window.dispatchEvent(new PopStateEvent('popstate'));
+                }}
+                className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 font-black text-xs flex items-center gap-2 shadow-md transition self-stretch sm:self-auto justify-center flex-shrink-0 cursor-pointer"
+              >
+                <span>Ver las 3 Sedes & Afiche</span>
+                <ExternalLink size={14} />
+              </a>
+            </div>
+          )}
+
           {/* ─── Sello de Garantía y Auditoría Oficial para Comercios VIP ─── */}
           {isFeatured && (
             <div className={`w-full p-4 sm:p-5 rounded-2xl border flex items-center gap-4 animate-fade-in-up stagger-1 ${

@@ -137,6 +137,8 @@ export function XIcon({ size = 15, className = 'w-4 h-4', ...props }) {
   );
 }
 
+export const TwitterIcon = XIcon;
+
 // ─── Sitio Web / Globe (Icono Vectorial) ───────────────────────
 export function GlobeIcon({ size = 16, className = 'w-4 h-4', ...props }) {
   return (
