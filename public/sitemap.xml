@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- 1. Página Principal (Home) -->
+  <url>
+    <loc>https://cumanaconecta.com/</loc>
+    <lastmod>2026-09-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="es" href="https://cumanaconecta.com/" />
+    <xhtml:link rel="alternate" hreflang="es-VE" href="https://cumanaconecta.com/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cumanaconecta.com/" />
+    <image:image>
+      <image:loc>https://cumanaconecta.com/images/og-cumanaconecta.jpg</image:loc>
+      <image:title>CumanáConecta — Directorio Comercial y de Servicios de Cumaná, Sucre, Venezuela</image:title>
+      <image:caption>Directorio oficial de farmacias 24h, clínicas, restaurantes y comercios con Cashea en Cumaná</image:caption>
+    </image:image>
+  </url>
+
+  <!-- 2. Directorio Completo -->
+  <url>
+    <loc>https://cumanaconecta.com/#directorio</loc>
+    <lastmod>2026-09-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+
+  <!-- 3. Comercios con Cashea en Cumaná -->
+  <url>
+    <loc>https://cumanaconecta.com/#directorio?cashea=true</loc>
+    <lastmod>2026-09-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+
+  <!-- 4. Categorías Principales en Cumaná -->
+  <url>
+    <loc>https://cumanaconecta.com/#directorio?cat=farmacias_24h</loc>
+    <lastmod>2026-09-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://cumanaconecta.com/#directorio?cat=salud</loc>
+    <lastmod>2026-09-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://cumanaconecta.com/#directorio?cat=restaurantes</loc>
+    <lastmod>2026-09-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://cumanaconecta.com/#directorio?cat=talleres</loc>
+    <lastmod>2026-09-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://cumanaconecta.com/#directorio?cat=turismo</loc>
+    <lastmod>2026-09-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://cumanaconecta.com/#directorio?cat=reposteria</loc>
+    <lastmod>2026-09-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://cumanaconecta.com/#directorio?cat=emprendedores</loc>
+    <lastmod>2026-09-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 5. Números de Emergencia Cumaná -->
+  <url>
+    <loc>https://cumanaconecta.com/#emergencias</loc>
+    <lastmod>2026-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 6. Registro de Comercios y Planes VIP -->
+  <url>
+    <loc>https://cumanaconecta.com/#planes</loc>
+    <lastmod>2026-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+
+</urlset>
