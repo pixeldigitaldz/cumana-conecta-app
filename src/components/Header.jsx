@@ -198,15 +198,21 @@ export default function Header({
             onClick={() => onNavigate && onNavigate('home')}
             className="flex items-center gap-2.5 sm:gap-3.5 cursor-pointer group min-w-0"
           >
-            {/* Isotipo con Letra C */}
+            {/* Logo Oficial con Imagen */}
             <div
-              className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center shadow-xs flex-shrink-0 group-hover:scale-105 transition-all ${
+              className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center p-1 sm:p-1.5 shadow-xs flex-shrink-0 group-hover:scale-105 transition-all ${
                 isDark
-                  ? 'bg-[#eab308] text-slate-950 font-black text-xl font-[\'Outfit\']'
-                  : 'bg-[#005f73] text-white'
+                  ? 'bg-white/95 border border-amber-400/30 shadow-[0_0_12px_rgba(250,204,21,0.15)]'
+                  : 'bg-white border border-slate-200/80 shadow-xs'
               }`}
             >
-              {isDark ? 'C' : <Building2 size={22} className="text-white" />}
+              <img
+                src="/images/cumana-conecta-logo.png"
+                alt="CumanáConecta — Logo Oficial"
+                className="w-full h-full object-contain"
+                width={48}
+                height={48}
+              />
             </div>
 
             <div className="flex flex-col min-w-0">
