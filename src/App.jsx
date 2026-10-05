@@ -29,6 +29,7 @@ import { useToast } from './context/ToastContext';
 import {
   SearchX,
   Crown,
+  Sparkles,
 } from 'lucide-react';
 
 // Merge admin overrides with mock data
@@ -616,37 +617,53 @@ export default function App() {
 
             {/* ─── Sección: Comercios Destacados / Patrocinados (VIP) ─── */}
             {featuredBusinesses.length > 0 && (
-          <section className="mb-10" aria-label="Comercios destacados de Cumaná">
+          <section className="mb-10" aria-label="Comercios recomendados de Cumaná">
             <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-2 border-b ${
               isDark ? 'border-[#252830]' : 'border-slate-200/80'
             }`}>
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wide ${
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10.5px] font-bold tracking-wide ${
                     isDark
-                      ? 'bg-[#221f15] text-[#f59e0b] border border-[#45371c]'
-                      : 'bg-amber-100 text-amber-900 border border-amber-200'
+                      ? 'bg-amber-400/10 text-amber-300 border border-amber-400/30'
+                      : 'bg-amber-50 text-amber-800 border border-amber-200'
                   }`}>
-                    <Crown size={11} className="fill-current" />
-                    <span>MONETIZADOS & VIP</span>
+                    <Sparkles size={12} className="text-amber-500 fill-amber-400" />
+                    <span>RECOMENDADOS</span>
                   </span>
                 </div>
                 <h2 className={`font-['Outfit'] font-bold text-lg sm:text-xl tracking-tight ${
                   isDark ? 'text-white' : 'text-slate-900'
                 }`}>
-                  Destacados en <span className={isDark ? 'text-amber-400' : 'text-[#005f73]'}>Cumaná</span>
+                  {query.trim() ? (
+                    <>
+                      Resultados recomendados para{' '}
+                      <span className={isDark ? 'text-amber-400' : 'text-[#005f73]'}>
+                        «{query}»
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      Comercios recomendados en{' '}
+                      <span className={isDark ? 'text-amber-400' : 'text-[#005f73]'}>
+                        Cumaná
+                      </span>
+                    </>
+                  )}
                 </h2>
                 <p className="text-xs text-slate-400 font-['Inter']">
-                  Los comercios con mayor valoración, verificación oficial y promociones exclusivas en la ciudad.
+                  {query.trim()
+                    ? 'Los locales más destacados y valorados para tu búsqueda.'
+                    : 'Comercios destacados en la ciudad por su servicio, valoraciones y calidad.'}
                 </p>
               </div>
 
-              <span className={`text-xs font-bold px-3 py-1 rounded-full border self-start sm:self-center ${
+              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border self-start sm:self-center ${
                 isDark
-                  ? 'bg-[#221f15] text-amber-300 border-[#45371c]'
-                  : 'text-amber-900 bg-amber-100/90 border-amber-200'
+                  ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                  : 'text-amber-800 bg-amber-50 border-amber-200'
               }`}>
-                ✨ {featuredBusinesses.length} Comercios Premium
+                ✨ {featuredBusinesses.length} Recomendados
               </span>
             </div>
 
