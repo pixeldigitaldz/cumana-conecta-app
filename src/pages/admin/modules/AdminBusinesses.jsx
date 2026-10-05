@@ -68,6 +68,7 @@ const PAYMENT_OPTIONS = [
 
 const EMPTY_FORM = {
   name: '',
+  rif: '',
   categoryLabel: '',
   category: '',
   zone: '',
@@ -420,17 +421,32 @@ function BusinessForm({ initial, categories, zones, onSave, onClose }) {
             <h4 className="font-['Outfit'] font-semibold text-sm text-slate-700 uppercase tracking-wide border-b border-slate-100 pb-2">
               Información del Negocio
             </h4>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1 font-['Inter']">
-                Nombre Comercial *
-              </label>
-              <input
-                className={inputClass('name')}
-                value={form.name}
-                onChange={(e) => set('name', e.target.value)}
-                placeholder="Ej. La Casona del Chef"
-              />
-              {errors.name && <p className="text-xs text-rose-500 mt-1">{errors.name}</p>}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-semibold text-slate-600 mb-1 font-['Inter']">
+                  Nombre Comercial *
+                </label>
+                <input
+                  className={inputClass('name')}
+                  value={form.name}
+                  onChange={(e) => set('name', e.target.value)}
+                  placeholder="Ej. Multiservicio Rapid Service CA"
+                />
+                {errors.name && <p className="text-xs text-rose-500 mt-1">{errors.name}</p>}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1 font-['Inter'] flex items-center justify-between">
+                  <span>Número de RIF</span>
+                  <span className="text-[10px] text-slate-400 font-normal">Empresarial</span>
+                </label>
+                <input
+                  className={inputClass('rif')}
+                  value={form.rif || ''}
+                  onChange={(e) => set('rif', e.target.value.toUpperCase())}
+                  placeholder="Ej. J-12345678-9"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1773,9 +1789,13 @@ export default function AdminBusinesses() {
                               />
                             )}
                           </div>
-                          <p className="text-xs text-slate-500 truncate mt-0.5">
-                            {biz.categoryLabel || biz.category || 'Comercio General'} ·{' '}
-                            <span className="text-slate-400">{biz.zone}</span>
+                          <p className="text-xs text-slate-500 truncate mt-0.5 flex items-center gap-1.5 flex-wrap">
+                            <span>{biz.categoryLabel || biz.category || 'Comercio General'} · <span className="text-slate-400">{biz.zone}</span></span>
+                            {biz.rif && (
+                              <span className="px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-mono text-[10px] font-bold border border-slate-200">
+                                RIF: {biz.rif}
+                              </span>
+                            )}
                           </p>
 
                           {/* Badges de Cashea, Promo y Canales de Contacto */}

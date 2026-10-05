@@ -188,6 +188,7 @@ export default function BusinessDetailModal({ business, onClose }) {
 
   const {
     name,
+    rif,
     categoryLabel,
     isFeatured,
     isVerified: _isVerified,
@@ -617,6 +618,23 @@ export default function BusinessDetailModal({ business, onClose }) {
               })}
             </div>
           )}
+
+          {/* Badge de RIF Fiscal (Esquina Inferior Derecha Abajo) */}
+          {rif && (
+            <div className="absolute bottom-4 right-4 z-20 animate-fade-in">
+              <div
+                title={`Registro de Información Fiscal: ${rif}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/80 hover:bg-black/95 text-white backdrop-blur-md border border-white/25 shadow-xl transition-all font-['Inter'] select-all"
+              >
+                <span className="text-amber-400 font-extrabold text-[11px] tracking-wider uppercase">
+                  RIF:
+                </span>
+                <span className="text-slate-100 font-mono text-xs font-semibold">
+                  {rif}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ─── 2. Contenedor de Información Horizontal (Abarca el 100% de Ancho) ─── */}
@@ -667,6 +685,20 @@ export default function BusinessDetailModal({ business, onClose }) {
                 }`}>
                   {categoryLabel}
                 </span>
+
+                {rif && (
+                  <span
+                    title={`Registro de Información Fiscal: ${rif}`}
+                    className={`text-xs font-mono font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 border shadow-2xs ${
+                      isDark
+                        ? 'bg-[#1e2026] text-slate-200 border-[#2d3039]'
+                        : 'bg-slate-100 text-slate-700 border-slate-200'
+                    }`}
+                  >
+                    <span className="text-amber-500 font-black text-[10px]">RIF:</span>
+                    <span>{rif}</span>
+                  </span>
+                )}
               </div>
 
               {/* Nombre del Comercio */}

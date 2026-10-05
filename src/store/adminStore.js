@@ -264,6 +264,7 @@ export const adminStore = {
     const shortCode = biz.shortCode || getBusinessShortCode(biz, list);
     const newBiz = {
       ...biz,
+      rif: biz.rif ? String(biz.rif).trim().toUpperCase() : '',
       id: `biz-${Date.now()}`,
       slug: biz.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
       shortCode,
