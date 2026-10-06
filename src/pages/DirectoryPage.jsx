@@ -624,20 +624,19 @@ export default function DirectoryPage({
               aria-label="Volver a la página principal de CumanáConecta"
             >
               <div
-                className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shadow-sm text-white flex-shrink-0 group-hover:scale-105 transition-transform ${
+                className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center p-1 sm:p-1.5 shadow-xs flex-shrink-0 group-hover:scale-105 transition-all ${
                   isDark
-                    ? "bg-[#eab308] text-slate-950 font-black text-xl font-['Outfit']"
-                    : 'bg-[#005f73] text-white'
+                    ? 'bg-white/95 border border-amber-400/30 shadow-[0_0_12px_rgba(250,204,21,0.15)]'
+                    : 'bg-white border border-slate-200/90 shadow-xs'
                 }`}
               >
-                {isDark ? (
-                  'C'
-                ) : (
-                  <Building2
-                    size={20}
-                    className="text-white sm:w-[22px] sm:h-[22px]"
-                  />
-                )}
+                <img
+                  src="/images/cumana-conecta-logo.png"
+                  alt="CumanáConecta — Logo Oficial"
+                  className="w-full h-full object-contain"
+                  width={44}
+                  height={44}
+                />
               </div>
               <div className="flex flex-col min-w-0">
                 <div className="flex items-center gap-1.5 sm:gap-2">

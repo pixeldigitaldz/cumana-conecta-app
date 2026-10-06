@@ -40,8 +40,8 @@ export default function AdminLogin({ onSuccess }) {
         >
           {/* Logo & Header */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 shadow-lg" style={{ backgroundColor: '#00a896' }}>
-              <Building2 size={32} className="text-white" />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 shadow-lg p-2 bg-white border border-slate-700/60">
+              <img src="/images/cumana-conecta-logo.png" alt="CumanáConecta" className="w-full h-full object-contain" />
             </div>
             <h1 className="font-['Outfit'] font-bold text-2xl text-white mb-1">
               CumanáConecta
