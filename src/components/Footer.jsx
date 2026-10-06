@@ -85,13 +85,15 @@ export default function Footer({
             {/* Logo */}
             <div className="flex items-center justify-center lg:justify-start gap-3">
               <div
-                className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-md flex-shrink-0 ${
-                  isDark
-                    ? 'bg-[#eab308] text-slate-950 font-black text-2xl font-[\'Outfit\']'
-                    : 'bg-[#00a896] text-white'
-                }`}
+                className="w-11 h-11 rounded-2xl flex items-center justify-center p-1.5 shadow-md flex-shrink-0 bg-white border border-slate-700/60"
               >
-                {isDark ? 'C' : <Building2 size={24} className="text-white" />}
+                <img
+                  src="/images/cumana-conecta-logo.png"
+                  alt="CumanáConecta"
+                  className="w-full h-full object-contain"
+                  width={44}
+                  height={44}
+                />
               </div>
               <span className="font-['Outfit'] font-extrabold text-2xl sm:text-3xl tracking-tight text-white">
                 Cumaná<span className={isDark ? 'text-[#facc15]' : 'text-[#00a896]'}>Conecta</span>

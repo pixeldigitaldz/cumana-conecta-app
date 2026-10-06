@@ -46,8 +46,8 @@ function SidebarNav({ active, onChange, onLogout, collapsed, onCollapse }) {
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.07)', minHeight: '65px' }}>
-        <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#00a896' }}>
-          <Building2 size={18} className="text-white" />
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center p-1 bg-white flex-shrink-0 shadow-xs">
+          <img src="/images/cumana-conecta-logo.png" alt="CumanáConecta" className="w-full h-full object-contain" />
         </div>
         {!collapsed && (
           <div className="min-w-0">
