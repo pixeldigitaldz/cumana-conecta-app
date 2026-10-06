@@ -427,8 +427,8 @@ function BusinessForm({ initial, categories, zones, onSave, onClose }) {
   };
 
   const inputClass = (field) =>
-    `w-full px-3.5 py-2.5 rounded-xl text-sm font-['Inter'] border outline-none transition focus:border-[#00a896] bg-white ${
-      errors[field] ? 'border-rose-400' : 'border-slate-200'
+    `w-full px-3.5 py-2.5 rounded-xl text-sm font-['Inter'] font-bold text-slate-900 bg-white border outline-none transition focus:border-[#00a896] focus:ring-2 focus:ring-[#00a896]/15 placeholder:text-slate-400 placeholder:font-normal placeholder:opacity-90 ${
+      errors[field] ? 'border-rose-400 ring-1 ring-rose-400/20' : 'border-slate-300 hover:border-slate-400'
     }`;
 
   return (
@@ -436,7 +436,31 @@ function BusinessForm({ initial, categories, zones, onSave, onClose }) {
       className="fixed inset-0 z-50 flex"
       style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}
     >
-      <div className="ml-auto w-full max-w-2xl bg-white h-full overflow-y-auto flex flex-col shadow-2xl">
+      <div
+        className="ml-auto w-full max-w-2xl bg-white text-slate-900 h-full overflow-y-auto flex flex-col shadow-2xl business-admin-modal"
+        style={{ colorScheme: 'light', color: '#0f172a' }}
+      >
+        <style>{`
+          .business-admin-modal input:not([type="checkbox"]):not([type="radio"]):not(.text-white),
+          .business-admin-modal select,
+          .business-admin-modal textarea:not(.text-white) {
+            color: #0f172a !important;
+            font-weight: 700 !important;
+            background-color: #ffffff !important;
+            color-scheme: light !important;
+          }
+          .business-admin-modal input::placeholder,
+          .business-admin-modal textarea::placeholder {
+            color: #94a3b8 !important;
+            font-weight: 400 !important;
+            opacity: 1 !important;
+          }
+          .business-admin-modal select option {
+            color: #0f172a !important;
+            background-color: #ffffff !important;
+            font-weight: 600 !important;
+          }
+        `}</style>
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-200 sticky top-0 bg-white z-10">
           <div>
@@ -528,7 +552,7 @@ function BusinessForm({ initial, categories, zones, onSave, onClose }) {
                         value={newCatName}
                         onChange={(e) => setNewCatName(e.target.value)}
                         placeholder="Ej. Hoteles & Posadas..."
-                        className="flex-1 px-2.5 py-1.5 rounded-lg text-xs border border-slate-200 outline-none focus:border-[#00a896] bg-white font-['Inter']"
+                        className="flex-1 px-2.5 py-1.5 rounded-lg text-xs border border-slate-300 outline-none focus:border-[#00a896] bg-white font-['Inter'] font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault();
@@ -768,7 +792,7 @@ function BusinessForm({ initial, categories, zones, onSave, onClose }) {
               </label>
               <textarea
                 rows={2}
-                className="w-full px-3.5 py-2.5 rounded-xl text-sm font-['Inter'] border border-slate-200 outline-none focus:border-[#00a896] bg-white resize-none"
+                className="w-full px-3.5 py-2.5 rounded-xl text-sm font-['Inter'] font-bold text-slate-900 border border-slate-300 outline-none focus:border-[#00a896] focus:ring-2 focus:ring-[#00a896]/15 bg-white resize-none placeholder:text-slate-400 placeholder:font-normal"
                 value={form.description}
                 onChange={(e) => set('description', e.target.value)}
                 placeholder="Breve reseña sobre productos, especialidades o servicios..."
