@@ -308,6 +308,9 @@ body {
 /* ─── Business card hover base ─── */
 .business-card {
   will-change: transform, box-shadow;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 /* ─── Scale-up (modals) ─── */
@@ -545,8 +548,12 @@ body {
 }
 
 /* Efecto hover refinado en tarjetas */
-.business-card {
+.business-card,
+.directory-card {
   will-change: transform, box-shadow;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 /* ─── Web Speech Voice Visualizer & Mic Keyframes ─── */

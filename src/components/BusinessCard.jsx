@@ -169,7 +169,7 @@ export default function BusinessCard({
         }`}
         aria-label={`Ficha de ${name}`}
       >
-        <div className="relative h-48 md:h-auto md:w-72 flex-shrink-0 overflow-hidden bg-slate-900">
+        <div className="relative h-48 md:h-auto md:w-72 flex-shrink-0 overflow-hidden bg-slate-900 isolate select-none -mb-1 md:-mb-0 md:-mr-1">
           <img
             src={bannerUrl || "/images/og-cumanaconecta.png"}
             alt={`Local de ${name} en ${zone}, Cumaná`}
@@ -177,8 +177,9 @@ export default function BusinessCard({
             onError={(e) => {
               e.currentTarget.src = "/images/og-cumanaconecta.png";
             }}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 will-change-transform"
           />
+          <div className="absolute inset-x-0 top-0 -bottom-2 md:-bottom-0 md:-right-2 bg-gradient-to-t md:bg-gradient-to-r from-black/60 via-transparent to-black/30 pointer-events-none" />
           <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between gap-2 z-10">
             <div
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[10px] font-bold uppercase tracking-wide shadow-xs ${
@@ -217,7 +218,7 @@ export default function BusinessCard({
           </div>
         </div>
 
-        <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
+        <div className="relative z-10 p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3 bg-white dark:bg-[#18191d]">
           <div className="space-y-2.5">
             <div className="flex items-start gap-3">
               <div
@@ -412,7 +413,7 @@ export default function BusinessCard({
       aria-label={`Ficha de ${name}`}
     >
       {/* ─── A. Header Visual con Imagen y Badges Superpuestos ─── */}
-      <div className="relative h-48 w-full overflow-hidden bg-slate-950">
+      <div className="relative h-48 w-full overflow-hidden bg-slate-950 isolate select-none -mb-1">
         <img
           src={bannerUrl || "/images/og-cumanaconecta.png"}
           alt={`Local de ${name} en ${zone}, Cumaná`}
@@ -420,9 +421,9 @@ export default function BusinessCard({
           onError={(e) => {
             e.currentTarget.src = "/images/og-cumanaconecta.png";
           }}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 will-change-transform"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/40 pointer-events-none" />
+        <div className="absolute inset-x-0 top-0 -bottom-2 bg-gradient-to-t from-black/70 via-transparent to-black/40 pointer-events-none" />
 
         {/* Fila Superior: Badge Oficial + Compartir / Favorito */}
         <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between gap-2 z-10">
@@ -497,7 +498,7 @@ export default function BusinessCard({
       </div>
 
       {/* ─── B. Contenido y Metadatos de la Tarjeta ─── */}
-      <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3.5">
+      <div className="relative z-10 p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3.5 bg-white dark:bg-[#18191d]">
         <div className="space-y-2.5">
           {/* Categoría & Zona / Sedes */}
           <div className="flex items-center justify-between gap-2 text-[11px]">

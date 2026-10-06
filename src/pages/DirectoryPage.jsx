@@ -1619,7 +1619,7 @@ export default function DirectoryPage({
                       transition: { type: 'spring', stiffness: 350, damping: 25 },
                     }}
                     whileTap={{ scale: 0.98 }}
-                    className={`group relative flex flex-col overflow-hidden cursor-pointer rounded-2xl transition-all duration-300 border ${
+                    className={`group relative flex flex-col overflow-hidden cursor-pointer directory-card rounded-2xl transition-all duration-300 border ${
                       isDark
                         ? 'bg-gradient-to-b from-[#1b1c21] to-[#141518] border-amber-500/35 hover:border-amber-400/70 shadow-sm hover:shadow-lg'
                         : 'bg-white border-amber-400/40 hover:border-amber-500/70 shadow-xs hover:shadow-md'
@@ -1627,7 +1627,7 @@ export default function DirectoryPage({
                     aria-label={`Ficha de ${item.fullName}`}
                   >
                     {/* Banner con Foto */}
-                    <div className="relative h-44 w-full overflow-hidden bg-slate-900">
+                    <div className="relative h-44 w-full overflow-hidden bg-slate-900 isolate select-none -mb-1">
                       <img
                         src={item.bannerUrl || '/images/og-cumanaconecta.png'}
                         alt={item.name}
@@ -1635,9 +1635,9 @@ export default function DirectoryPage({
                         onError={(e) => {
                           e.currentTarget.src = '/images/og-cumanaconecta.png';
                         }}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 will-change-transform"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none" />
+                      <div className="absolute inset-x-0 top-0 -bottom-2 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none" />
 
                       {/* Badge Superior Derecho: VIP discreto y elegante */}
                       <div className="absolute top-2.5 right-2.5 z-10">
@@ -1685,7 +1685,7 @@ export default function DirectoryPage({
                     </div>
 
                     {/* Cuerpo de la Tarjeta */}
-                    <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
+                    <div className="relative z-10 p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3 bg-white dark:bg-[#18191d]">
                       <div className="space-y-2">
                         {/* Categoría superior */}
                         <div className="flex items-center justify-between gap-2 text-[10.5px]">
@@ -1829,7 +1829,7 @@ export default function DirectoryPage({
                     transition: { type: 'spring', stiffness: 350, damping: 25 },
                   }}
                   whileTap={{ scale: 0.98 }}
-                  className={`group relative flex flex-col overflow-hidden cursor-pointer rounded-2xl border transition-all duration-300 ${
+                  className={`group relative flex flex-col overflow-hidden cursor-pointer directory-card rounded-2xl border transition-all duration-300 ${
                     isDark
                       ? 'bg-[#18191d] border-[#282a32] hover:border-slate-600 hover:shadow-lg'
                       : 'bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-lg'
@@ -1837,7 +1837,7 @@ export default function DirectoryPage({
                   aria-label={`Ficha de ${item.fullName}`}
                 >
                   {/* Banner con Foto Oficial de la Web o Imagen del Comercio */}
-                  <div className="relative h-44 w-full overflow-hidden bg-slate-900">
+                  <div className="relative h-44 w-full overflow-hidden bg-slate-900 isolate select-none -mb-1">
                     <img
                       src={item.bannerUrl || '/images/og-cumanaconecta.png'}
                       alt={item.name}
@@ -1845,9 +1845,9 @@ export default function DirectoryPage({
                       onError={(e) => {
                         e.currentTarget.src = '/images/og-cumanaconecta.png';
                       }}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 will-change-transform"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
+                    <div className="absolute inset-x-0 top-0 -bottom-2 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
 
                     {/* Badge de Horario */}
                     <div className="absolute top-2.5 left-2.5 z-10">
@@ -1886,7 +1886,7 @@ export default function DirectoryPage({
                   </div>
 
                   {/* Cuerpo de la Tarjeta */}
-                  <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
+                  <div className="relative z-10 p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3 bg-white dark:bg-[#18191d]">
                     <div className="space-y-2">
                       {/* Categoría superior */}
                       <div className="text-[10.5px]">
