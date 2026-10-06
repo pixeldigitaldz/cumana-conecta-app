@@ -43,7 +43,7 @@ import {
   CasheaIcon,
 } from '../../../components/SocialIcons';
 import adminStore from '../../../store/adminStore.js';
-import { DEFAULT_EXTENDED_DETAILS_BY_CATEGORY } from '../../../data/mockBusinessData.js';
+import { DEFAULT_EXTENDED_DETAILS_BY_CATEGORY, isBusinessOpen } from '../../../data/mockBusinessData.js';
 
 const STATUS_OPTS = [
   { value: 'all', label: 'Todas las solicitudes' },
@@ -106,8 +106,15 @@ const EMPTY_FORM = {
   spotlightPromoDesc: '',
   rating: 4.5,
   reviewCount: 0,
-  schedule: { 'Lunes a Viernes': '8:00 AM - 6:00 PM' },
-  scheduleText: 'Lunes a Viernes: 8:00 AM - 6:00 PM',
+  isOpen24h: false,
+  weekdayOpen: true,
+  weekdaySchedule: '8:00 AM - 5:30 PM',
+  saturdayOpen: false,
+  saturdaySchedule: '8:30 AM - 2:00 PM',
+  sundayOpen: false,
+  sundaySchedule: '9:00 AM - 2:00 PM',
+  schedule: { 'Lunes a Viernes': '8:00 AM - 5:30 PM', 'Sábado': 'Cerrado', 'Domingo': 'Cerrado' },
+  scheduleText: 'Lunes a Viernes: 8:00 AM - 5:30 PM | Sábado: Cerrado | Domingo: Cerrado',
 };
 
 function formatBusinessDate(dateStr, idx = 0) {
@@ -218,6 +225,72 @@ function BusinessForm({ initial, categories, zones, onSave, onClose }) {
         .map(([k, v]) => `${k}: ${v}`)
         .join(' | ');
     }
+
+    // Normalizar horarios por días específicos (Lunes a Viernes, Sábado, Domingo)
+    let weekdaySched = '8:00 AM - 5:30 PM';
+    let weekdayOpen = true;
+    let satSched = '8:30 AM - 2:00 PM';
+    let satOpen = false;
+    let sunSched = '9:00 AM - 2:00 PM';
+    let sunOpen = false;
+
+    if (merged.isOpen24h) {
+      weekdaySched = '24 Horas';
+      satSched = '24 Horas';
+      sunSched = '24 Horas';
+      weekdayOpen = true;
+      satOpen = true;
+      sunOpen = true;
+    } else {
+      const scheduleEntries = Object.entries(merged.schedule || {});
+      const schedText = merged.scheduleText || '';
+
+      // Lunes a Viernes
+      const weekdayEntry = scheduleEntries.find(([k]) => /lunes|semana|lun/i.test(k));
+      if (weekdayEntry) {
+        weekdaySched = weekdayEntry[1];
+        weekdayOpen = !/cerrado|no labora/i.test(weekdayEntry[1]);
+      } else if (/lun\w*\s*(?:a|-)\s*vie/i.test(schedText)) {
+        const match = schedText.match(/lun\w*\s*(?:a|-)\s*vie\w*:\s*([^|;]+)/i);
+        if (match) {
+          weekdaySched = match[1].trim();
+          weekdayOpen = !/cerrado|no labora/i.test(weekdaySched);
+        }
+      }
+
+      // Sábado
+      const satEntry = scheduleEntries.find(([k]) => /s[áa]bado|sab/i.test(k));
+      if (satEntry) {
+        satSched = satEntry[1];
+        satOpen = !/cerrado|no labora/i.test(satEntry[1]);
+      } else if (/s[áa]b/i.test(schedText)) {
+        const match = schedText.match(/s[áa]b(?:ado)?:\s*([^|;]+)/i);
+        if (match) {
+          satSched = match[1].trim();
+          satOpen = !/cerrado|no labora/i.test(satSched);
+        }
+      }
+
+      // Domingo
+      const sunEntry = scheduleEntries.find(([k]) => /domingo|dom/i.test(k));
+      if (sunEntry) {
+        sunSched = sunEntry[1];
+        sunOpen = !/cerrado|no labora/i.test(sunEntry[1]);
+      } else if (/dom/i.test(schedText)) {
+        const match = schedText.match(/dom(?:ingo)?:\s*([^|;]+)/i);
+        if (match) {
+          sunSched = match[1].trim();
+          sunOpen = !/cerrado|no labora/i.test(sunSched);
+        }
+      }
+    }
+
+    merged.weekdayOpen = merged.weekdayOpen !== undefined ? merged.weekdayOpen : weekdayOpen;
+    merged.weekdaySchedule = merged.weekdaySchedule || weekdaySched;
+    merged.saturdayOpen = merged.saturdayOpen !== undefined ? merged.saturdayOpen : satOpen;
+    merged.saturdaySchedule = merged.saturdaySchedule || satSched;
+    merged.sundayOpen = merged.sundayOpen !== undefined ? merged.sundayOpen : sunOpen;
+    merged.sundaySchedule = merged.sundaySchedule || sunSched;
     if (merged.showFeaturedProducts === undefined) {
       merged.showFeaturedProducts = true;
     }
@@ -303,6 +376,31 @@ function BusinessForm({ initial, categories, zones, onSave, onClose }) {
     const current = [...(form.highlights || [])];
     current.splice(idx, 1);
     set('highlights', current);
+  };
+
+  // Handler sincronizado para horarios
+  const updateScheduleState = (patch) => {
+    setForm((f) => {
+      const next = { ...f, ...patch };
+      const newSchedule = {};
+
+      if (next.isOpen24h) {
+        newSchedule['Lunes a Domingo'] = '24 Horas Ininterrumpidas';
+      } else {
+        newSchedule['Lunes a Viernes'] = next.weekdayOpen !== false ? (next.weekdaySchedule || '8:00 AM - 5:30 PM') : 'Cerrado';
+        newSchedule['Sábado'] = next.saturdayOpen ? (next.saturdaySchedule || '8:30 AM - 2:00 PM') : 'Cerrado';
+        newSchedule['Domingo'] = next.sundayOpen ? (next.sundaySchedule || '9:00 AM - 2:00 PM') : 'Cerrado';
+      }
+
+      const textParts = Object.entries(newSchedule).map(([k, v]) => `${k}: ${v}`);
+      const newScheduleText = textParts.join(' | ');
+
+      return {
+        ...next,
+        schedule: newSchedule,
+        scheduleText: newScheduleText,
+      };
+    });
   };
 
   // Handlers para Productos, Servicios & Especialidades
@@ -405,6 +503,17 @@ function BusinessForm({ initial, categories, zones, onSave, onClose }) {
       resolvedCategoryLabel = registered.label;
     }
 
+    // Construir estructura final del horario
+    const finalSchedule = {};
+    if (form.isOpen24h) {
+      finalSchedule['Lunes a Domingo'] = '24 Horas Ininterrumpidas';
+    } else {
+      finalSchedule['Lunes a Viernes'] = form.weekdayOpen !== false ? (form.weekdaySchedule || '8:00 AM - 5:30 PM') : 'Cerrado';
+      finalSchedule['Sábado'] = form.saturdayOpen ? (form.saturdaySchedule || '8:30 AM - 2:00 PM') : 'Cerrado';
+      finalSchedule['Domingo'] = form.sundayOpen ? (form.sundaySchedule || '9:00 AM - 2:00 PM') : 'Cerrado';
+    }
+    const finalScheduleText = Object.entries(finalSchedule).map(([k, v]) => `${k}: ${v}`).join(' | ');
+
     const data = {
       ...form,
       category: resolvedCategory,
@@ -413,7 +522,15 @@ function BusinessForm({ initial, categories, zones, onSave, onClose }) {
       showHighlights: form.showHighlights !== false,
       featuredProducts: cleanFeaturedProducts,
       showFeaturedProducts: form.showFeaturedProducts !== false,
-      schedule: form.scheduleText ? { 'Horario': form.scheduleText } : form.schedule,
+      schedule: finalSchedule,
+      scheduleText: finalScheduleText,
+      weekdayOpen: form.weekdayOpen !== false,
+      weekdaySchedule: form.weekdayOpen !== false ? (form.weekdaySchedule || '8:00 AM - 5:30 PM') : 'Cerrado',
+      saturdayOpen: !!form.saturdayOpen,
+      saturdaySchedule: form.saturdayOpen ? (form.saturdaySchedule || '8:30 AM - 2:00 PM') : 'Cerrado',
+      sundayOpen: !!form.sundayOpen,
+      sundaySchedule: form.sundayOpen ? (form.sundaySchedule || '9:00 AM - 2:00 PM') : 'Cerrado',
+      isOpen24h: !!form.isOpen24h,
       tags:
         typeof form.tags === 'string'
           ? form.tags
@@ -656,16 +773,227 @@ function BusinessForm({ initial, categories, zones, onSave, onClose }) {
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1 font-['Inter']">
-                Horario de Atención Semanal
-              </label>
-              <input
-                className={inputClass()}
-                value={form.scheduleText || ''}
-                onChange={(e) => set('scheduleText', e.target.value)}
-                placeholder="Ej. Lun - Vie: 8:00 AM - 6:00 PM | Sáb: 8:00 AM - 2:00 PM"
-              />
+            {/* ─── Horarios de Atención Semanal (Barras por Días) ─── */}
+            <div className="p-4 rounded-2xl border border-slate-200/90 bg-slate-50/60 space-y-3.5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-200/80">
+                <div>
+                  <label className="text-xs font-bold text-slate-800 font-['Inter'] flex items-center gap-1.5">
+                    <Clock size={15} className="text-teal-600" />
+                    <span>Horario de Atención Semanal</span>
+                  </label>
+                  <p className="text-[11px] text-slate-500 font-['Inter']">
+                    El sistema detectará automáticamente si el local está Abierto o Cerrado en tiempo real según la hora de Cumaná.
+                  </p>
+                </div>
+
+                {/* Switch 24 Horas */}
+                <label className="inline-flex items-center gap-2 cursor-pointer text-xs font-bold font-['Inter'] select-none bg-white px-2.5 py-1.5 rounded-xl border border-slate-300 hover:border-teal-500 transition shrink-0 shadow-2xs">
+                  <input
+                    type="checkbox"
+                    checked={!!form.isOpen24h}
+                    onChange={(e) => updateScheduleState({ isOpen24h: e.target.checked })}
+                    className="w-4 h-4 rounded text-teal-600 accent-teal-600 cursor-pointer"
+                  />
+                  <span className={form.isOpen24h ? 'text-teal-700 font-black' : 'text-slate-600'}>
+                    {form.isOpen24h ? '✓ Abierto 24 Horas' : 'Horario 24h'}
+                  </span>
+                </label>
+              </div>
+
+              {!form.isOpen24h ? (
+                <div className="space-y-2.5">
+                  {/* BARRA 1: Lunes a Viernes */}
+                  <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-teal-500" />
+                        <span className="text-xs font-bold text-slate-900 font-['Outfit'] uppercase tracking-wider">
+                          Barra 1: Lunes a Viernes
+                        </span>
+                      </div>
+                      <label className="inline-flex items-center gap-1.5 text-xs font-semibold cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={form.weekdayOpen !== false}
+                          onChange={(e) => updateScheduleState({ weekdayOpen: e.target.checked })}
+                          className="w-3.5 h-3.5 rounded text-teal-600 accent-teal-600 cursor-pointer"
+                        />
+                        <span className={form.weekdayOpen !== false ? 'text-teal-700 font-bold' : 'text-slate-400'}>
+                          {form.weekdayOpen !== false ? 'Abierto' : 'Cerrado'}
+                        </span>
+                      </label>
+                    </div>
+
+                    {form.weekdayOpen !== false ? (
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <input
+                          type="text"
+                          className={`${inputClass()} flex-1`}
+                          value={form.weekdaySchedule || ''}
+                          onChange={(e) => updateScheduleState({ weekdaySchedule: e.target.value })}
+                          placeholder="Ej. 8:00 AM - 5:30 PM"
+                        />
+                        <div className="flex gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => updateScheduleState({ weekdaySchedule: '8:00 AM - 5:30 PM' })}
+                            className="px-2 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+                            title="Horario comercial clásico de Cumaná"
+                          >
+                            8:00 AM - 5:30 PM
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateScheduleState({ weekdaySchedule: '8:00 AM - 6:00 PM' })}
+                            className="px-2 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+                          >
+                            8:00 AM - 6:00 PM
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-rose-500 font-medium italic">
+                        Cerrado durante los días de semana.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* BARRA 2: Sábados */}
+                  <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                        <span className="text-xs font-bold text-slate-900 font-['Outfit'] uppercase tracking-wider">
+                          Barra 2: Sábados
+                        </span>
+                      </div>
+                      <label className="inline-flex items-center gap-1.5 text-xs font-semibold cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={!!form.saturdayOpen}
+                          onChange={(e) => updateScheduleState({ saturdayOpen: e.target.checked })}
+                          className="w-3.5 h-3.5 rounded text-amber-500 accent-amber-500 cursor-pointer"
+                        />
+                        <span className={form.saturdayOpen ? 'text-amber-700 font-bold' : 'text-slate-400'}>
+                          {form.saturdayOpen ? 'Abierto' : 'Cerrado'}
+                        </span>
+                      </label>
+                    </div>
+
+                    {form.saturdayOpen ? (
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <input
+                          type="text"
+                          className={`${inputClass()} flex-1`}
+                          value={form.saturdaySchedule || ''}
+                          onChange={(e) => updateScheduleState({ saturdaySchedule: e.target.value })}
+                          placeholder="Ej. 8:30 AM - 2:00 PM o 8:00 AM - 6:00 PM"
+                        />
+                        <div className="flex gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => updateScheduleState({ saturdaySchedule: '8:30 AM - 2:00 PM' })}
+                            className="px-2 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+                          >
+                            8:30 AM - 2:00 PM
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateScheduleState({ saturdaySchedule: '8:00 AM - 6:00 PM' })}
+                            className="px-2 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+                          >
+                            8:00 AM - 6:00 PM
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-500 italic">
+                        No labora los sábados (Cerrado).
+                      </p>
+                    )}
+                  </div>
+
+                  {/* BARRA 3: Domingos */}
+                  <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />
+                        <span className="text-xs font-bold text-slate-900 font-['Outfit'] uppercase tracking-wider">
+                          Barra 3: Domingos
+                        </span>
+                      </div>
+                      <label className="inline-flex items-center gap-1.5 text-xs font-semibold cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={!!form.sundayOpen}
+                          onChange={(e) => updateScheduleState({ sundayOpen: e.target.checked })}
+                          className="w-3.5 h-3.5 rounded text-sky-500 accent-sky-500 cursor-pointer"
+                        />
+                        <span className={form.sundayOpen ? 'text-sky-700 font-bold' : 'text-slate-400'}>
+                          {form.sundayOpen ? 'Abierto' : 'Cerrado'}
+                        </span>
+                      </label>
+                    </div>
+
+                    {form.sundayOpen ? (
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <input
+                          type="text"
+                          className={`${inputClass()} flex-1`}
+                          value={form.sundaySchedule || ''}
+                          onChange={(e) => updateScheduleState({ sundaySchedule: e.target.value })}
+                          placeholder="Ej. 9:00 AM - 2:00 PM"
+                        />
+                        <div className="flex gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => updateScheduleState({ sundaySchedule: '9:00 AM - 2:00 PM' })}
+                            className="px-2 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+                          >
+                            9:00 AM - 2:00 PM
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateScheduleState({ sundaySchedule: '8:00 AM - 4:00 PM' })}
+                            className="px-2 py-1 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+                          >
+                            8:00 AM - 4:00 PM
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-500 italic">
+                        No labora los domingos (Cerrado).
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 text-xs font-semibold flex items-center gap-2 font-['Inter']">
+                  <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+                  <span>Este comercio está registrado con atención ininterrumpida las 24 Horas los 7 días de la semana.</span>
+                </div>
+              )}
+
+              {/* Vista Previa del Estado en Tiempo Real */}
+              <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-100/90 border border-slate-200/90 text-xs font-['Inter']">
+                <span className="text-slate-700 font-semibold truncate max-w-xs sm:max-w-md">
+                  📋 {form.scheduleText || 'Horario por configurar'}
+                </span>
+                {(() => {
+                  const currentlyOpen = isBusinessOpen(form);
+                  return (
+                    <span className={`px-2.5 py-1 rounded-full font-bold text-[11px] flex items-center gap-1.5 shrink-0 shadow-2xs ${
+                      currentlyOpen
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                        : 'bg-rose-100 text-rose-800 border border-rose-300'
+                    }`}>
+                      <span className={`w-2 h-2 rounded-full ${currentlyOpen ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+                      <span>{currentlyOpen ? 'Abierto Ahora' : 'Cerrado Ahora'}</span>
+                    </span>
+                  );
+                })()}
+              </div>
             </div>
 
             {/* Icono o Emoji Representativo */}
