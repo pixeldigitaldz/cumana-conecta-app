@@ -27,6 +27,8 @@ import {
   RotateCcw,
   Crown,
   ShieldCheck,
+  Tag,
+  Truck,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import CasheaBanner from '../components/CasheaBanner';
@@ -352,7 +354,7 @@ export default function DirectoryPage({
             type: (biz.plan === 'vip' || biz.isFeatured) ? 'featured' : 'standard',
             zone: biz.zone || 'Cumaná',
             address: biz.address || biz.zone || 'Cumaná, Sucre',
-            bannerUrl: biz.bannerUrl || biz.photos?.[0] || 'https://images.unsplash.com/photo-1576671081837-49000212a370?w=800&q=80',
+            bannerUrl: biz.bannerUrl || biz.photos?.[0] || '/images/og-cumanaconecta.png',
             isVerified: biz.isVerified || false,
             isOpen: isBusinessOpen(biz),
             isEmergency: biz.isOpen24h || biz.category === 'farmacias_24h' || biz.category === 'salud',
@@ -478,10 +480,14 @@ export default function DirectoryPage({
 
   const handleCardClick = (item) => {
     if (onSelectBusiness) {
+      if (item._rawBusiness) {
+        onSelectBusiness(item._rawBusiness);
+        return;
+      }
       onSelectBusiness({
         id: item.id,
         name: item.fullName || item.name,
-        categoryLabel: item.categoryLabel || item.tags[0] || 'Comercio Local',
+        categoryLabel: item.categoryLabel || item.tags?.[0] || 'Comercio Local',
         category: item.category,
         isFeatured: item.type === 'featured',
         isVerified: !!item.isVerified,
@@ -493,16 +499,14 @@ export default function DirectoryPage({
           `https://maps.google.com/?q=${encodeURIComponent(item.address)}`,
         whatsapp: item.whatsapp,
         phone: item.phone,
-        paymentMethods: item.paymentMethods || (item.tags.includes('Acepta Cashea')
+        paymentMethods: item.paymentMethods || (item.tags?.includes('Acepta Cashea')
           ? ['cashea', 'pago_movil', 'usd_cash', 'punto_de_venta']
           : ['pago_movil', 'usd_cash']),
-        activePromotion: item.discountText
-          ? `Promoción Especial: ${item.discountText}`
-          : null,
+        activePromotion: item.discountText || null,
         bannerUrl:
           item.bannerUrl ||
-          'https://images.unsplash.com/photo-1542838132-92c53300491e?w=900&q=80',
-        photos: item.bannerUrl ? [item.bannerUrl] : [],
+          '/images/og-cumanaconecta.png',
+        photos: item.bannerUrl ? [item.bannerUrl] : ['/images/og-cumanaconecta.png'],
         description: item.description,
         rating: 4.8,
         reviewCount: 94,
@@ -1611,64 +1615,93 @@ export default function DirectoryPage({
                     key={item.id}
                     onClick={() => handleCardClick(item)}
                     whileHover={{
-                      scale: 1.05,
-                      y: -5,
+                      scale: 1.03,
+                      y: -4,
                       transition: { type: 'spring', stiffness: 350, damping: 25 },
                     }}
                     whileTap={{ scale: 0.98 }}
-                    className={`group relative flex flex-col overflow-hidden cursor-pointer rounded-2xl transition-shadow ${
+                    className={`group relative flex flex-col overflow-hidden cursor-pointer rounded-2xl transition-all duration-300 border ${
                       isDark
-                        ? 'bg-gradient-to-b from-[#1c1a16] to-[#141518] border-2 border-amber-500/80 shadow-[0_6px_28px_rgba(245,158,11,0.2)] hover:border-amber-400 hover:shadow-2xl'
-                        : 'bg-white border-2 border-amber-500/80 shadow-[0_6px_24px_rgba(245,158,11,0.16)] hover:border-amber-500 hover:shadow-2xl'
+                        ? 'bg-gradient-to-b from-[#1b1c21] to-[#141518] border-amber-500/35 hover:border-amber-400/70 shadow-sm hover:shadow-lg'
+                        : 'bg-white border-amber-400/40 hover:border-amber-500/70 shadow-xs hover:shadow-md'
                     }`}
                     aria-label={`Ficha de ${item.fullName}`}
                   >
-                    {/* Línea dorada superior de prestigio */}
-                    <div className="h-1 w-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 flex-shrink-0" />
-
                     {/* Banner con Foto */}
                     <div className="relative h-44 w-full overflow-hidden bg-slate-900">
                       <img
-                        src={item.bannerUrl}
+                        src={item.bannerUrl || '/images/og-cumanaconecta.png'}
                         alt={item.name}
                         loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.src = '/images/og-cumanaconecta.png';
+                        }}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/35 pointer-events-none" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 pointer-events-none" />
 
-                      {/* Badges Superiores: SOCIO VIP OFICIAL y Descuento */}
-                      <div className="absolute top-2.5 right-2.5 flex flex-col items-end gap-1 z-10">
-                        <span className="px-3 py-1 rounded-lg text-[10px] font-black bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-slate-950 uppercase tracking-wider shadow-md flex items-center gap-1.5">
-                          <Crown size={12} className="fill-slate-950 flex-shrink-0" />
-                          <span>SOCIO VIP OFICIAL</span>
+                      {/* Badge Superior Derecho: VIP discreto y elegante */}
+                      <div className="absolute top-2.5 right-2.5 z-10">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-black/60 backdrop-blur-md text-amber-300 border border-amber-400/30 shadow-xs">
+                          <Crown size={11} className="fill-amber-400 text-amber-400 flex-shrink-0" />
+                          <span>VIP</span>
                         </span>
-                        {item.hasDiscount && (
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-[#dc2626] text-white shadow-xs">
-                            {item.discountText}
+                      </div>
+
+                      {/* Badge Superior Izquierdo: Abierto / Cerrado en tiempo real */}
+                      <div className="absolute top-2.5 left-2.5 z-10">
+                        {item.isOpen ? (
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold backdrop-blur-md shadow-xs ${
+                              isDark
+                                ? 'bg-[#0f3c30]/90 text-[#34d399] border border-[#059669]/40'
+                                : 'bg-white/95 text-emerald-700 border border-emerald-200'
+                            }`}
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            <span>Abierto Ahora</span>
+                          </span>
+                        ) : (
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold backdrop-blur-md shadow-xs ${
+                              isDark
+                                ? 'bg-black/80 text-slate-300 border border-slate-700/60'
+                                : 'bg-white/95 text-slate-700 border border-slate-200'
+                            }`}
+                          >
+                            <span>Cerrado</span>
                           </span>
                         )}
                       </div>
 
-                      {/* Badge Inferior Izquierdo: Abierto Ahora */}
-                      <div className="absolute bottom-2.5 left-2.5 z-10">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-bold shadow-xs ${
-                            isDark
-                              ? 'bg-[#0f3c30]/90 text-[#34d399] border border-[#059669]/40'
-                              : 'bg-white text-slate-900'
-                          }`}
-                        >
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                          <span>Abierto Ahora</span>
-                        </span>
-                      </div>
+                      {/* Badge Inferior Derecho: Delivery */}
+                      {item.hasDelivery && (
+                        <div className="absolute bottom-2.5 right-2.5 z-10">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9.5px] font-medium bg-black/65 backdrop-blur-md text-slate-200">
+                            <Truck size={10} className="text-amber-400" />
+                            <span>Delivery</span>
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Cuerpo de la Tarjeta */}
-                    <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3.5">
+                    <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
                       <div className="space-y-2">
+                        {/* Categoría superior */}
+                        <div className="flex items-center justify-between gap-2 text-[10.5px]">
+                          <span className={`font-bold uppercase tracking-wider ${isDark ? 'text-amber-400/90' : 'text-[#005f73]'}`}>
+                            {item.categoryLabel || 'Comercio Local'}
+                          </span>
+                          {item.isMultiBranch && (
+                            <span className="text-[10px] font-bold text-amber-500">
+                              {item.branchCount || 3} Sedes
+                            </span>
+                          )}
+                        </div>
+
                         {/* Título con Sello de Verificación */}
-                        <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                        <div className="flex items-center justify-between gap-1.5 flex-wrap min-w-0">
                           <h2
                             className={`font-['Outfit'] font-bold text-base leading-snug truncate transition-colors ${
                               isDark
@@ -1679,9 +1712,9 @@ export default function DirectoryPage({
                             {item.name}
                           </h2>
                           {item.isVerified && (
-                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold shadow-2xs flex-shrink-0 ${
+                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9.5px] font-extrabold shadow-2xs flex-shrink-0 ${
                               isDark
-                                ? 'bg-amber-400/15 text-amber-300 border border-amber-400/40'
+                                ? 'bg-amber-400/15 text-amber-300 border border-amber-400/30'
                                 : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             }`}>
                               <ShieldCheck size={11} className="stroke-[2.5]" />
@@ -1690,64 +1723,47 @@ export default function DirectoryPage({
                           )}
                         </div>
 
-                        {/* Ubicación */}
+                        {/* Ubicación y Dirección breve */}
                         <div className="flex items-center gap-1.5 text-xs text-slate-400">
                           <MapPin
-                            size={13}
+                            size={12}
                             className={
                               isDark
                                 ? 'text-amber-400 flex-shrink-0'
                                 : 'text-slate-400 flex-shrink-0'
                             }
                           />
-                          <span className="truncate">{item.zone}</span>
+                          <span className="truncate">{item.address || item.zone}</span>
                         </div>
 
-                        {/* Tags */}
-                        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                          {item.tags.map((t, idx) => {
-                            if (t === 'Acepta Cashea') {
-                              return (
-                                <span
-                                  key={idx}
-                                  className="px-2.5 py-0.5 rounded-md text-[10px] font-black bg-[#FFE600] text-slate-950 border border-amber-300 flex items-center gap-1 shadow-2xs"
-                                >
-                                  <CasheaIcon className="w-3.5 h-3.5 object-contain" />
-                                  <span>{t}</span>
-                                </span>
-                              );
-                            }
-                            const isEmergency = t === 'Emergencia 24h';
-                            return (
-                              <span
-                                key={idx}
-                                className={`px-2.5 py-0.5 rounded-md text-[10px] font-semibold ${
-                                  isEmergency
-                                    ? isDark
-                                      ? 'bg-[#172554] text-[#38bdf8] border border-[#1e3a8a]'
-                                      : 'bg-[#e0f7f6] text-[#006e70] border border-[#b2ebf2]'
-                                    : isDark
-                                    ? 'bg-[#22242c] text-slate-300'
-                                    : 'bg-slate-100 text-slate-700'
-                                }`}
-                              >
-                                {t}
-                              </span>
-                            );
-                          })}
-                        </div>
-                        {/* Sello de Garantía y Atención Prioritaria para miembros VIP */}
-                        <div className={`px-2.5 py-1 rounded-lg text-[10.5px] font-medium flex items-center justify-between border ${
-                          isDark
-                            ? 'bg-gradient-to-r from-amber-950/40 to-[#1e1c18] border-amber-500/20 text-amber-300'
-                            : 'bg-gradient-to-r from-amber-50/90 to-yellow-50/40 border-amber-200 text-amber-950'
-                        }`}>
-                          <span className="flex items-center gap-1.5 truncate">
-                            <Sparkles size={11} className="text-amber-400 fill-amber-400 flex-shrink-0" />
-                            <span className="font-semibold truncate">Atención Prioritaria</span>
-                          </span>
-                          <span className="text-[9px] uppercase font-black tracking-wider bg-amber-400 text-slate-950 px-1.5 py-0.2 rounded shadow-2xs ml-1 flex-shrink-0">VIP</span>
-                        </div>
+                        {/* Pequeña descripción */}
+                        {item.description && (
+                          <p className={`text-xs line-clamp-2 leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                            {item.description}
+                          </p>
+                        )}
+
+                        {/* Promoción / Combo destacado dentro de la tarjeta */}
+                        {item.hasDiscount && item.discountText && (
+                          <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border ${
+                            isDark
+                              ? 'bg-rose-950/25 border-rose-500/25 text-rose-300'
+                              : 'bg-rose-50 border-rose-200 text-rose-700'
+                          }`}>
+                            <Tag size={12} className="text-rose-500 flex-shrink-0" />
+                            <span className="truncate">{item.discountText}</span>
+                          </div>
+                        )}
+
+                        {/* Cashea activo si aplica */}
+                        {(item.tags?.includes('Acepta Cashea') || item.paymentMethods?.includes('cashea')) && (
+                          <div className="pt-0.5">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-black rounded-md bg-[#FFE600] text-slate-950 border border-amber-300 shadow-2xs">
+                              <CasheaIcon className="w-3.5 h-3.5 object-contain" />
+                              <span>Acepta Cashea</span>
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       {/* Botones de Acción */}
@@ -1803,40 +1819,83 @@ export default function DirectoryPage({
                 );
               }
 
-              // ── Tarjeta ESTÁNDAR ──
+              // ── Tarjeta ESTÁNDAR (Gratis / Regular) ──
               return (
                 <motion.article
                   key={item.id}
                   onClick={() => handleCardClick(item)}
                   whileHover={{
-                    scale: 1.05,
-                    y: -5,
+                    scale: 1.03,
+                    y: -4,
                     transition: { type: 'spring', stiffness: 350, damping: 25 },
                   }}
                   whileTap={{ scale: 0.98 }}
-                  className={`group relative flex flex-col overflow-hidden cursor-pointer rounded-2xl border transition-shadow ${
+                  className={`group relative flex flex-col overflow-hidden cursor-pointer rounded-2xl border transition-all duration-300 ${
                     isDark
                       ? 'bg-[#18191d] border-[#282a32] hover:border-slate-600 hover:shadow-lg'
                       : 'bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-lg'
                   }`}
                   aria-label={`Ficha de ${item.fullName}`}
                 >
-                  {/* Banner con Icono */}
-                  <div
-                    className={`relative h-44 w-full flex items-center justify-center transition-colors ${
-                      isDark
-                        ? 'bg-[#141518] group-hover:bg-[#1e2026]'
-                        : 'bg-[#eef2f5] group-hover:bg-[#e2e8f0]/80'
-                    }`}
-                  >
-                    <div className="opacity-40 group-hover:opacity-75 transition-all transform group-hover:scale-105 duration-300">
-                      {renderIcon(item.icon)}
+                  {/* Banner con Foto Oficial de la Web o Imagen del Comercio */}
+                  <div className="relative h-44 w-full overflow-hidden bg-slate-900">
+                    <img
+                      src={item.bannerUrl || '/images/og-cumanaconecta.png'}
+                      alt={item.name}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.src = '/images/og-cumanaconecta.png';
+                      }}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
+
+                    {/* Badge de Horario */}
+                    <div className="absolute top-2.5 left-2.5 z-10">
+                      {item.isOpen ? (
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold backdrop-blur-md shadow-xs ${
+                            isDark
+                              ? 'bg-[#0f3c30]/90 text-[#34d399] border border-[#059669]/40'
+                              : 'bg-white/95 text-emerald-700 border border-emerald-200'
+                          }`}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span>Abierto Ahora</span>
+                        </span>
+                      ) : (
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-semibold backdrop-blur-md shadow-xs ${
+                            isDark
+                              ? 'bg-black/80 text-slate-300 border border-slate-700/60'
+                              : 'bg-white/95 text-slate-700 border border-slate-200'
+                          }`}
+                        >
+                          <span>Cerrado</span>
+                        </span>
+                      )}
                     </div>
+
+                    {item.hasDelivery && (
+                      <div className="absolute bottom-2.5 right-2.5 z-10">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9.5px] font-medium bg-black/65 backdrop-blur-md text-slate-200">
+                          <Truck size={10} className="text-amber-400" />
+                          <span>Delivery</span>
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Cuerpo de la Tarjeta */}
-                  <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3.5">
+                  <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-3">
                     <div className="space-y-2">
+                      {/* Categoría superior */}
+                      <div className="text-[10.5px]">
+                        <span className={`font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-[#005f73]'}`}>
+                          {item.categoryLabel || 'Comercio Local'}
+                        </span>
+                      </div>
+
                       {/* Título */}
                       <h2
                         className={`font-['Outfit'] font-bold text-base leading-snug truncate transition-colors ${
@@ -1848,57 +1907,81 @@ export default function DirectoryPage({
                         {item.name}
                       </h2>
 
-                      {/* Ubicación */}
+                      {/* Dirección / Ubicación */}
                       <div className="flex items-center gap-1.5 text-xs text-slate-400">
                         <MapPin
-                          size={13}
+                          size={12}
                           className={
                             isDark
                               ? 'text-amber-400 flex-shrink-0'
                               : 'text-slate-400 flex-shrink-0'
                           }
                         />
-                        <span className="truncate">{item.zone}</span>
+                        <span className="truncate">{item.address || item.zone}</span>
                       </div>
 
-                      {/* Tag */}
-                      <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                        {item.tags.map((t, idx) => (
-                          <span
-                            key={idx}
-                            className={`px-2.5 py-0.5 rounded-md text-[10px] font-semibold ${
-                              isDark
-                                ? 'bg-[#22242c] text-slate-300'
-                                : 'bg-slate-100 text-slate-700'
-                            }`}
-                          >
-                            {t}
+                      {/* Pequeña descripción */}
+                      {item.description && (
+                        <p className={`text-xs line-clamp-2 leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                          {item.description}
+                        </p>
+                      )}
+
+                      {/* Cashea activo si aplica */}
+                      {(item.tags?.includes('Acepta Cashea') || item.paymentMethods?.includes('cashea')) && (
+                        <div className="pt-0.5">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-black rounded-md bg-[#FFE600] text-slate-950 border border-amber-300 shadow-2xs">
+                            <CasheaIcon className="w-3.5 h-3.5 object-contain" />
+                            <span>Acepta Cashea</span>
                           </span>
-                        ))}
-                      </div>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Botón Contactar */}
-                    <div className="pt-1">
+                    {/* Botones de Acción */}
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      {item.whatsapp ? (
+                        <a
+                          href={`https://wa.me/${item.whatsapp}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="h-9 px-2 rounded-xl bg-gradient-to-r from-emerald-600 to-green-500 hover:from-emerald-500 hover:to-green-400 text-white font-['Inter'] font-extrabold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 shadow-[0_3px_12px_rgba(16,185,129,0.35)]"
+                        >
+                          <WhatsAppIcon size={13} className="flex-shrink-0" />
+                          <span>WhatsApp</span>
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCardClick(item);
+                          }}
+                          className={`h-9 px-2 rounded-xl font-['Inter'] font-semibold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 ${
+                            isDark
+                              ? 'bg-[#221f15] hover:bg-[#2d281a] border border-[#45371c] text-[#f59e0b]'
+                              : 'bg-[#eef2f5] hover:bg-[#e2e8f0] text-slate-800'
+                          }`}
+                        >
+                          <Phone size={13} />
+                          <span>Contactar</span>
+                        </button>
+                      )}
+
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleCardClick(item);
                         }}
-                        className={`h-9 w-full rounded-xl font-['Inter'] font-semibold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-98 ${
+                        className={`h-9 px-2 rounded-xl font-['Inter'] font-semibold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 ${
                           isDark
-                            ? 'bg-[#221f15] hover:bg-[#2d281a] border border-[#45371c] text-[#f59e0b]'
+                            ? 'bg-[#22242c] hover:bg-[#2c303a] text-slate-200'
                             : 'bg-[#eef2f5] hover:bg-[#e2e8f0] text-slate-800'
                         }`}
                       >
-                        <Phone
-                          size={13}
-                          className={
-                            isDark ? 'text-amber-400' : 'text-slate-600'
-                          }
-                        />
-                        <span>Contactar</span>
+                        <span>Ver Ficha</span>
                       </button>
                     </div>
                   </div>

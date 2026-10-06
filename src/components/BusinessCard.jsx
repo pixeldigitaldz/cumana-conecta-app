@@ -171,9 +171,12 @@ export default function BusinessCard({
       >
         <div className="relative h-48 md:h-auto md:w-72 flex-shrink-0 overflow-hidden bg-slate-900">
           <img
-            src={bannerUrl}
+            src={bannerUrl || "/images/og-cumanaconecta.png"}
             alt={`Local de ${name} en ${zone}, Cumaná`}
             loading="lazy"
+            onError={(e) => {
+              e.currentTarget.src = "/images/og-cumanaconecta.png";
+            }}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
           <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between gap-2 z-10">
@@ -411,9 +414,12 @@ export default function BusinessCard({
       {/* ─── A. Header Visual con Imagen y Badges Superpuestos ─── */}
       <div className="relative h-48 w-full overflow-hidden bg-slate-950">
         <img
-          src={bannerUrl}
+          src={bannerUrl || "/images/og-cumanaconecta.png"}
           alt={`Local de ${name} en ${zone}, Cumaná`}
           loading="lazy"
+          onError={(e) => {
+            e.currentTarget.src = "/images/og-cumanaconecta.png";
+          }}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/40 pointer-events-none" />
