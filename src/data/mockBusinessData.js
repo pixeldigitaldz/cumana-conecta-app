@@ -409,10 +409,21 @@ export function getBusinessExtendedDetails(business) {
     }
   }
 
+  // Si el comercio tiene desactivada explícitamente la sección de aspectos destacados
+  const showHighlights = business.showHighlights !== false;
+  let highlights = [];
+
+  if (showHighlights) {
+    if (Array.isArray(business.highlights) && business.highlights.length > 0) {
+      highlights = business.highlights;
+    } else if (business.highlights === undefined || business.highlights === null) {
+      highlights = selected.highlights || [];
+    }
+  }
+
   return {
-    highlights: (Array.isArray(business.highlights) && business.highlights.length > 0)
-      ? business.highlights
-      : selected.highlights,
+    highlights,
+    showHighlights,
     featuredProducts,
     showFeaturedProducts,
     referencePoint: business.referencePoint || selected.referencePoint || `${business.zone || 'Cumaná'}, Cumaná (fácil acceso vehicular y peatonal)`,

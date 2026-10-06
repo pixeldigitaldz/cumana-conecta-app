@@ -90,6 +90,8 @@ const EMPTY_FORM = {
   logoUrl: '🏪',
   paymentMethods: [],
   showCasheaCalculator: true,
+  showHighlights: true,
+  highlights: [],
   showFeaturedProducts: true,
   featuredProducts: [],
   tags: '',
@@ -226,6 +228,16 @@ function BusinessForm({ initial, categories, zones, onSave, onClose }) {
       merged.featuredProducts = template ? JSON.parse(JSON.stringify(template)) : [];
     }
 
+    if (merged.showHighlights === undefined) {
+      merged.showHighlights = true;
+    }
+    if (initial?.highlights !== undefined && Array.isArray(initial.highlights)) {
+      merged.highlights = JSON.parse(JSON.stringify(initial.highlights));
+    } else {
+      const template = DEFAULT_EXTENDED_DETAILS_BY_CATEGORY[merged.category]?.highlights || DEFAULT_EXTENDED_DETAILS_BY_CATEGORY.tiendas?.highlights;
+      merged.highlights = template ? JSON.parse(JSON.stringify(template)) : [];
+    }
+
     // Normalizar categoría si venía con nombre en lugar de ID
     const allCats = Array.isArray(categories) && categories.length > 0 ? categories : adminStore.getCategories();
     if (merged.category) {
@@ -266,6 +278,31 @@ function BusinessForm({ initial, categories, zones, onSave, onClose }) {
       'paymentMethods',
       methods.includes(id) ? methods.filter((m) => m !== id) : [...methods, id]
     );
+  };
+
+  // Handlers para Aspectos Destacados y Ventajas
+  const handleLoadHighlightsCategoryTemplate = (catKey = form.category) => {
+    const template = DEFAULT_EXTENDED_DETAILS_BY_CATEGORY[catKey]?.highlights || DEFAULT_EXTENDED_DETAILS_BY_CATEGORY.tiendas?.highlights;
+    if (template && template.length > 0) {
+      set('highlights', JSON.parse(JSON.stringify(template)));
+    }
+  };
+
+  const handleAddHighlight = () => {
+    const current = form.highlights || [];
+    set('highlights', [...current, '']);
+  };
+
+  const handleUpdateHighlight = (idx, val) => {
+    const current = [...(form.highlights || [])];
+    current[idx] = val;
+    set('highlights', current);
+  };
+
+  const handleDeleteHighlight = (idx) => {
+    const current = [...(form.highlights || [])];
+    current.splice(idx, 1);
+    set('highlights', current);
   };
 
   // Handlers para Productos, Servicios & Especialidades
@@ -339,6 +376,10 @@ function BusinessForm({ initial, categories, zones, onSave, onClose }) {
     if (!validate()) return;
     setSaving(true);
     await new Promise((r) => setTimeout(r, 250));
+    const cleanHighlights = (form.highlights || [])
+      .map((h) => (typeof h === 'string' ? h.trim() : ''))
+      .filter(Boolean);
+
     const cleanFeaturedProducts = (form.featuredProducts || [])
       .map((group) => ({
         title: (group.title || '').trim(),
@@ -368,6 +409,8 @@ function BusinessForm({ initial, categories, zones, onSave, onClose }) {
       ...form,
       category: resolvedCategory,
       categoryLabel: resolvedCategoryLabel,
+      highlights: cleanHighlights,
+      showHighlights: form.showHighlights !== false,
       featuredProducts: cleanFeaturedProducts,
       showFeaturedProducts: form.showFeaturedProducts !== false,
       schedule: form.scheduleText ? { 'Horario': form.scheduleText } : form.schedule,
@@ -1028,6 +1071,140 @@ function BusinessForm({ initial, categories, zones, onSave, onClose }) {
                 placeholder="Acepta Cashea, Delivery, Arepas, Centro..."
               />
             </div>
+          </section>
+
+          {/* ─── Aspectos Destacados y Ventajas ─── */}
+          <section className="space-y-4 p-4 rounded-2xl bg-[#0b0f17] border border-slate-800 text-white shadow-md">
+            {/* Header con Título, Contador y Switch Activar/Desactivar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                  <ShieldCheck size={19} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-['Outfit'] font-bold text-sm text-white">
+                      Aspectos Destacados y Ventajas
+                    </h4>
+                    <span className="text-[11px] text-amber-400 font-semibold bg-amber-500/10 border border-amber-500/20 px-2 py-0.2 rounded-full">
+                      {(form.highlights || []).length} { (form.highlights || []).length === 1 ? 'ventaja' : 'ventajas' }
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 font-['Inter']">
+                    Viñetas de garantías, diferenciales y beneficios destacados con check en la ficha.
+                  </p>
+                </div>
+              </div>
+
+              {/* Toggle de Visualización */}
+              <label className="inline-flex items-center gap-2 cursor-pointer text-xs font-bold font-['Inter'] select-none bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700 hover:border-amber-400/60 transition shrink-0">
+                <input
+                  type="checkbox"
+                  checked={form.showHighlights !== false}
+                  onChange={(e) => set('showHighlights', e.target.checked)}
+                  className="w-4 h-4 rounded text-amber-500 accent-amber-500 cursor-pointer"
+                />
+                <span className={form.showHighlights !== false ? 'text-amber-400' : 'text-slate-400'}>
+                  {form.showHighlights !== false ? '✓ Mostrar en el local' : '✕ Oculto en el local'}
+                </span>
+              </label>
+            </div>
+
+            {/* Si está habilitada la sección */}
+            {form.showHighlights !== false ? (
+              <div className="space-y-4">
+                {/* Barra de Acciones / Herramientas */}
+                <div className="flex flex-wrap items-center justify-between gap-2 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+                  <span className="text-xs text-slate-300 font-['Inter'] flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                    <span>Modifica cada punto destacado con el texto exacto que aparecerá en el local:</span>
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {(DEFAULT_EXTENDED_DETAILS_BY_CATEGORY[form.category]?.highlights || DEFAULT_EXTENDED_DETAILS_BY_CATEGORY.tiendas?.highlights) && (
+                      <button
+                        type="button"
+                        onClick={() => handleLoadHighlightsCategoryTemplate(form.category)}
+                        className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition flex items-center gap-1 cursor-pointer"
+                        title="Carga las ventajas recomendadas para este tipo de comercio"
+                      >
+                        <Sparkles size={13} />
+                        <span>Sugerir por rubro</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleAddHighlight}
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 transition flex items-center gap-1 cursor-pointer shadow-xs"
+                    >
+                      <Plus size={14} />
+                      <span>Agregar Ventaja</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Lista de Aspectos Destacados */}
+                {(!form.highlights || form.highlights.length === 0) ? (
+                  <div className="p-6 rounded-2xl bg-slate-900/40 border border-dashed border-slate-800 text-center space-y-3">
+                    <p className="text-sm text-slate-400 font-['Inter']">
+                      No hay aspectos destacados configurados para este comercio.
+                    </p>
+                    <div className="flex justify-center gap-3">
+                      <button
+                        type="button"
+                        onClick={handleAddHighlight}
+                        className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 transition flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Plus size={14} />
+                        <span>Crear primera ventaja</span>
+                      </button>
+                      {(DEFAULT_EXTENDED_DETAILS_BY_CATEGORY[form.category]?.highlights || DEFAULT_EXTENDED_DETAILS_BY_CATEGORY.tiendas?.highlights) && (
+                        <button
+                          type="button"
+                          onClick={() => handleLoadHighlightsCategoryTemplate(form.category)}
+                          className="px-3.5 py-2 rounded-xl text-xs font-medium text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Sparkles size={14} />
+                          <span>Cargar plantilla recomendada</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {form.highlights.map((highlight, hIdx) => (
+                      <div
+                        key={hIdx}
+                        className="flex items-center gap-2.5 p-2 rounded-xl bg-[#121620] border border-slate-800/90 hover:border-amber-500/30 transition group"
+                      >
+                        <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                          <Check size={15} />
+                        </div>
+                        <input
+                          type="text"
+                          className="flex-1 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-['Inter'] text-white bg-slate-900 border border-slate-700/80 focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30 outline-none transition placeholder:text-slate-500"
+                          value={highlight}
+                          onChange={(e) => handleUpdateHighlight(hIdx, e.target.value)}
+                          placeholder="Ej. Precios competitivos en divisas y bolívares a tasa oficial BCV..."
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteHighlight(hIdx)}
+                          className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition shrink-0 cursor-pointer"
+                          title="Eliminar este aspecto destacado"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-3 rounded-xl bg-slate-900/40 border border-slate-800/60 text-xs text-slate-400 flex items-center gap-2 font-['Inter']">
+                <span className="w-2 h-2 rounded-full bg-slate-600" />
+                <span>La sección de "Aspectos Destacados y Ventajas" no se mostrará en la ficha de este comercio.</span>
+              </div>
+            )}
           </section>
 
           {/* Productos, Servicios & Especialidades */}

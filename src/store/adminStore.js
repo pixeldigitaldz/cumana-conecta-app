@@ -178,6 +178,7 @@ function initBusinesses() {
       // Sección de Productos, Servicios & Especialidades y Ficha Enriquecida
       showFeaturedProducts: existing && existing.showFeaturedProducts !== undefined ? existing.showFeaturedProducts : (baseBiz.showFeaturedProducts !== false),
       featuredProducts: existing && Array.isArray(existing.featuredProducts) ? existing.featuredProducts : baseBiz.featuredProducts || null,
+      showHighlights: existing && existing.showHighlights !== undefined ? existing.showHighlights : (baseBiz.showHighlights !== false),
       highlights: existing && Array.isArray(existing.highlights) ? existing.highlights : baseBiz.highlights || null,
       referencePoint: (existing && existing.referencePoint) || baseBiz.referencePoint || '',
     };
