@@ -102,11 +102,32 @@ export default function BusinessLocationMap({ business }) {
 
     mapInstanceRef.current = map;
 
-    // Capa de Carto Voyager (estética idéntica a la captura con calles y río Manzanares)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(map);
+    // Capa de mapas de alta calidad (Google Maps Roadmap con nombres de calles en español y sin marcas de agua)
+    const cartoApiKey = import.meta.env.VITE_CARTO_API_KEY || import.meta.env.VITE_MAP_API_KEY;
+    
+    if (cartoApiKey) {
+      L.tileLayer(`https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?api_key=${cartoApiKey}`, {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors &copy; CARTO',
+      }).addTo(map);
+    } else {
+      const googleTileLayer = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&hl=es', {
+        subdomains: ['0', '1', '2', '3'],
+        maxZoom: 20,
+        attribution: '&copy; <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer">Google Maps</a> / &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>',
+      }).addTo(map);
+
+      // Respaldo transparente a OpenStreetMap si la red local restringiese algún dominio
+      googleTileLayer.on('tileerror', () => {
+        if (!map._osmFallbackAdded) {
+          map._osmFallbackAdded = true;
+          L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>',
+          }).addTo(map);
+        }
+      });
+    }
 
     // Marcador de chincheta azul
     const marker = L.marker(coordinates, { icon: customPinIcon }).addTo(map);
