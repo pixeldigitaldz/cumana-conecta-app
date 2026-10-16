@@ -1,0 +1,131 @@
+@import "tailwindcss";
+
+@config "../tailwind.config.js";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Plus Jakarta Sans', 'Outfit', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* REGLAS FUNDAMENTALES DE TEMA: CUMANÁCONECTA ARCHITECTURAL CARBON & AMBER / PETROLEUM TEAL */
+html:not(.dark),
+html.light,
+body:not(.dark),
+body.light {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+html.dark,
+body.dark {
+  background-color: #0b0d11;
+  color: #e2e8f0;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.025em;
+}
+
+.font-mono-tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+:root {
+  --bg-app: #F8FAFC;
+  --text-main: #0F172A;
+  --text-muted: #334155;
+  --card-bg: #FFFFFF;
+  --card-border: #E2E8F0;
+  --surface: #0f131c;
+  --primary: #004655;
+  --primary-container: #004655;
+  --secondary: #fbbf24;
+  --secondary-container: #d97706;
+}
+
+.dark {
+  --bg-app: #0B0D11;
+  --text-main: #FFFFFF;
+  --text-muted: #CBD5E1;
+  --card-bg: #11141A;
+  --card-border: #222630;
+  --surface: #11141A;
+  --primary: #fbbf24;
+  --primary-container: #fbbf24;
+  --secondary: #004655;
+  --secondary-container: #004655;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #262a33;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ff6b4a;
+}
+
+/* Scrollbar visible y estilizado para bandejas y tablas horizontales */
+.table-scrollbar::-webkit-scrollbar {
+  height: 8px;
+}
+.table-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 9999px;
+}
+.dark .table-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 9999px;
+}
+.table-scrollbar::-webkit-scrollbar-thumb {
+  background: #94A3B8;
+  border-radius: 9999px;
+}
+.dark .table-scrollbar::-webkit-scrollbar-thumb {
+  background: #30353e;
+  border-radius: 9999px;
+}
+.table-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #ff6b4a;
+}
+
+/* Ocultar botón flotante de desarrollo / dev indicators de Next.js */
+nextjs-portal,
+[data-nextjs-toast],
+[data-nextjs-dev-tools-button],
+#nextjs-dev-tools-button,
+div[data-nextjs-route-announcer] + * {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

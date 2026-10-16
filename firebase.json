@@ -1,11 +1,13 @@
 {
   "hosting": {
-    "public": "dist",
+    "public": "out",
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
     ],
+    "cleanUrls": true,
+    "trailingSlash": false,
     "rewrites": [
       {
         "source": "**",
@@ -14,7 +16,29 @@
     ],
     "headers": [
       {
-        "source": "**/*.@(jpg|jpeg|gif|png|svg|webp|js|css|woff2)",
+        "source": "/opengraph-image",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "image/png"
+          },
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=86400, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/@(favicon*|robots.txt|manifest*.json|sitemap.xml)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=86400, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(jpg|jpeg|gif|png|svg|webp|js|css|woff2|mp4)",
         "headers": [
           {
             "key": "Cache-Control",
@@ -23,7 +47,7 @@
         ]
       },
       {
-        "source": "/index.html",
+        "source": "/**",
         "headers": [
           {
             "key": "Cache-Control",

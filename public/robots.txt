@@ -1,31 +1,13 @@
-# Robots.txt — CumanáConecta
-# https://cumanaconecta.com/
-
 User-agent: *
-Allow: /
-Disallow: /#panel-admin
+Disallow: /administracion/
+Disallow: /administracion
+Disallow: /admin/
 Disallow: /admin
-Disallow: /private/
+Disallow: /administrador/
+Disallow: /administrador
+Disallow: /censo/
+Disallow: /censo
+Disallow: /tablet/
+Disallow: /tablet
 
-# Buscadores Principales (Google, Bing, Apple)
-User-agent: Googlebot
-User-agent: Googlebot-Image
-User-agent: Bingbot
-User-agent: Applebot
 Allow: /
-Allow: /images/
-Allow: /assets/
-
-# Redes Sociales y Mensajería (Previsualizaciones Open Graph)
-User-agent: Twitterbot
-User-agent: facebookexternalhit
-User-agent: WhatsApp
-User-agent: TelegramBot
-User-agent: LinkedInBot
-User-agent: Pinterestbot
-Allow: /
-Allow: /images/
-Allow: /assets/
-
-# Sitemap oficial
-Sitemap: https://cumanaconecta.com/sitemap.xml

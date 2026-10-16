@@ -1,0 +1,4 @@
+file '/media/Datos/Cumana Cnecta3.0/public/video-assets/clip_0.mp4'
+file '/media/Datos/Cumana Cnecta3.0/public/video-assets/clip_1.mp4'
+file '/media/Datos/Cumana Cnecta3.0/public/video-assets/clip_2.mp4'
+file '/media/Datos/Cumana Cnecta3.0/public/video-assets/clip_3.mp4'
