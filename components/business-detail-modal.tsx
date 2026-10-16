@@ -413,9 +413,15 @@ export function BusinessDetailModal({
                       GEOLOCALIZACIÓN EN CUMANÁ
                     </span>
                   </div>
-                  <span className="text-[10px] font-mono-tabular font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-500/20 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
-                    GPS ACTIVO
-                  </span>
+                  {business.hasGps !== false ? (
+                    <span className="text-[10px] font-mono-tabular font-extrabold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-500/20 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                      GPS ACTIVO
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-mono-tabular font-bold text-slate-500 dark:text-slate-400 bg-slate-200/80 dark:bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-300 dark:border-slate-700">
+                      GPS INACTIVO
+                    </span>
+                  )}
                 </div>
 
                 <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
@@ -423,21 +429,37 @@ export function BusinessDetailModal({
                 </p>
 
                 {/* Versión Pequeña del Mapa (Mini-Map) de la Ruta */}
-                <BusinessMiniMap
-                  business={business}
-                  heightClass="h-44 sm:h-52"
-                  showDirectionsButton={true}
-                />
+                {business.hasGps !== false ? (
+                  <BusinessMiniMap
+                    business={business}
+                    heightClass="h-44 sm:h-52"
+                    showDirectionsButton={true}
+                  />
+                ) : (
+                  <div className="h-44 sm:h-52 rounded-xl border border-dashed border-slate-200 dark:border-[#1E2536] bg-slate-100/60 dark:bg-[#0b0e14] flex flex-col items-center justify-center p-5 text-center space-y-2">
+                    <div className="w-10 h-10 rounded-2xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-amber-500">
+                      <MapPin className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                      Ubicación por Dirección Física
+                    </span>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
+                      Este comercio atiende de forma directa en su dirección física o mediante pedidos y despacho por WhatsApp.
+                    </p>
+                  </div>
+                )}
 
-                {/* Caja con coordenadas oficiales */}
-                <div className="p-2.5 rounded-lg bg-white dark:bg-[#0b0d11] border border-slate-200 dark:border-[#252934] flex items-center justify-between text-xs">
-                  <span className="font-mono-tabular text-[11px] text-slate-700 dark:text-slate-300">
-                    {coordsDisplay}
-                  </span>
-                  <span className="text-[10px] font-mono-tabular font-bold text-slate-500">
-                    CUMANÁ • EDO. SUCRE
-                  </span>
-                </div>
+                {/* Caja con coordenadas oficiales si GPS está activo */}
+                {business.hasGps !== false && (
+                  <div className="p-2.5 rounded-lg bg-white dark:bg-[#0b0d11] border border-slate-200 dark:border-[#252934] flex items-center justify-between text-xs">
+                    <span className="font-mono-tabular text-[11px] text-slate-700 dark:text-slate-300">
+                      {coordsDisplay}
+                    </span>
+                    <span className="text-[10px] font-mono-tabular font-bold text-slate-500">
+                      CUMANÁ • EDO. SUCRE
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

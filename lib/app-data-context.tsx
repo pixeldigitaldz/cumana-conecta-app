@@ -569,9 +569,44 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (dbStructure && Array.isArray(dbStructure.categories)) {
-          setStructure(dbStructure);
-        } else if (localLoadedStructure) {
-          setIndexedDBItem(STORAGE_KEYS.STRUCTURE, localLoadedStructure);
+          // Fusionar zonas y categorías con las por defecto para que NUNCA se pierdan las creadas por el usuario
+          const mergedZones = Array.from(new Set([
+            ...DEFAULT_STRUCTURE.zones,
+            ...(localLoadedStructure?.zones || []),
+            ...(dbStructure.zones || [])
+          ]));
+          const mergedCategories = Array.from(new Set([
+            ...DEFAULT_STRUCTURE.categories,
+            ...(localLoadedStructure?.categories || []),
+            ...(dbStructure.categories || [])
+          ]));
+          const mergedStructure: SiteStructureConfig = {
+            ...DEFAULT_STRUCTURE,
+            ...localLoadedStructure,
+            ...dbStructure,
+            zones: mergedZones,
+            categories: mergedCategories
+          };
+          setStructure(mergedStructure);
+        } else if (localLoadedStructure && Array.isArray(localLoadedStructure.categories)) {
+          const mergedZones = Array.from(new Set([
+            ...DEFAULT_STRUCTURE.zones,
+            ...(localLoadedStructure.zones || [])
+          ]));
+          const mergedCategories = Array.from(new Set([
+            ...DEFAULT_STRUCTURE.categories,
+            ...(localLoadedStructure.categories || [])
+          ]));
+          const mergedStructure: SiteStructureConfig = {
+            ...DEFAULT_STRUCTURE,
+            ...localLoadedStructure,
+            zones: mergedZones,
+            categories: mergedCategories
+          };
+          setStructure(mergedStructure);
+          setIndexedDBItem(STORAGE_KEYS.STRUCTURE, mergedStructure);
+        } else {
+          setIndexedDBItem(STORAGE_KEYS.STRUCTURE, DEFAULT_STRUCTURE);
         }
 
         if (dbPlans && Array.isArray(dbPlans) && dbPlans.length > 0) {
@@ -1096,19 +1131,35 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     setPlansPageConfig(DEFAULT_PLANS_PAGE_CONFIG);
   };
 
-  // Funciones de Estructura
+  // Funciones de Estructura con persistencia inmediata
+  const persistStructure = (next: SiteStructureConfig) => {
+    setIndexedDBItem(STORAGE_KEYS.STRUCTURE, next);
+    try {
+      localStorage.setItem(STORAGE_KEYS.STRUCTURE, JSON.stringify(next));
+    } catch (e) {}
+    broadcastDataUpdate(STORAGE_KEYS.STRUCTURE, next);
+  };
+
   const updateStructure = (updates: Partial<SiteStructureConfig>) => {
-    setStructure(prev => ({ ...prev, ...updates }));
+    setStructure(prev => {
+      const next = { ...prev, ...updates };
+      persistStructure(next);
+      return next;
+    });
   };
 
   const updatePlatformSettings = (settings: Partial<NonNullable<SiteStructureConfig['platformSettings']>>) => {
-    setStructure(prev => ({
-      ...prev,
-      platformSettings: {
-        ...(prev.platformSettings || DEFAULT_STRUCTURE.platformSettings!),
-        ...settings
-      }
-    }));
+    setStructure(prev => {
+      const next = {
+        ...prev,
+        platformSettings: {
+          ...(prev.platformSettings || DEFAULT_STRUCTURE.platformSettings!),
+          ...settings
+        }
+      };
+      persistStructure(next);
+      return next;
+    });
   };
 
   const addCategory = (category: string) => {
@@ -1116,15 +1167,21 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     if (!trimmed) return;
     setStructure(prev => {
       if (prev.categories.includes(trimmed)) return prev;
-      return { ...prev, categories: [...prev.categories, trimmed] };
+      const next = { ...prev, categories: [...prev.categories, trimmed] };
+      persistStructure(next);
+      return next;
     });
   };
 
   const removeCategory = (category: string) => {
-    setStructure(prev => ({
-      ...prev,
-      categories: prev.categories.filter(c => c !== category)
-    }));
+    setStructure(prev => {
+      const next = {
+        ...prev,
+        categories: prev.categories.filter(c => c !== category)
+      };
+      persistStructure(next);
+      return next;
+    });
   };
 
   const addZone = (zone: string) => {
@@ -1132,19 +1189,26 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     if (!trimmed) return;
     setStructure(prev => {
       if (prev.zones.includes(trimmed)) return prev;
-      return { ...prev, zones: [...prev.zones, trimmed] };
+      const next = { ...prev, zones: [...prev.zones, trimmed] };
+      persistStructure(next);
+      return next;
     });
   };
 
   const removeZone = (zone: string) => {
-    setStructure(prev => ({
-      ...prev,
-      zones: prev.zones.filter(z => z !== zone)
-    }));
+    setStructure(prev => {
+      const next = {
+        ...prev,
+        zones: prev.zones.filter(z => z !== zone)
+      };
+      persistStructure(next);
+      return next;
+    });
   };
 
   const resetStructureToDefault = () => {
     setStructure(DEFAULT_STRUCTURE);
+    persistStructure(DEFAULT_STRUCTURE);
   };
 
   // Funciones de Publicidad & Banners Patrocinados

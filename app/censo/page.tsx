@@ -54,6 +54,7 @@ import { useTheme } from '@/components/theme-provider';
 import { isBusinessOpen, getBusinessStatusInfo, formatOpeningHours, formatTimeTo12h } from '@/lib/business-hours';
 import { compressImageFile } from '@/lib/image-compression';
 import { getIndexedDBItem, setIndexedDBItem } from '@/lib/storage';
+import { BusinessHoursPicker } from '@/components/business-hours-picker';
 
 interface OfflineRecord {
   id: string;
@@ -66,7 +67,7 @@ interface OfflineRecord {
 const OFFLINE_STORAGE_KEY = 'cumana_tablet_census_queue';
 
 export default function TabletCensusPage() {
-  const { businesses, addBusiness, structure, addCategory, removeCategory } = useAppData();
+  const { businesses, addBusiness, structure, addCategory, removeCategory, addZone } = useAppData();
   const { theme, toggleTheme } = useTheme();
 
   // Estado de Conectividad en tiempo real
@@ -119,15 +120,20 @@ export default function TabletCensusPage() {
   const [photoPreview, setPhotoPreview] = useState<string>('');
   
   // Estados para Horario de Atención y Estado Dinámico (Abierto/Cerrado)
+  const [customOpeningHours, setCustomOpeningHours] = useState<string>('Lunes a Viernes: 7:00 AM a 8:00 PM | Sábado: 8:00 AM - 1:00 PM');
+  const [hasGps, setHasGps] = useState<boolean>(true);
+  const [mapsUrl, setMapsUrl] = useState<string>('');
+  const [isAddingZone, setIsAddingZone] = useState<boolean>(false);
+  const [newZoneName, setNewZoneName] = useState<string>('');
   const [isOpen24Hours, setIsOpen24Hours] = useState<boolean>(false);
   const [openTime, setOpenTime] = useState<string>('07:00');
   const [closeTime, setCloseTime] = useState<string>('20:00');
 
   // Cálculo en vivo del estado según el horario ingresado en la tablet
-  const currentOpeningHours = isOpen24Hours ? '24 Horas' : formatOpeningHours(openTime, closeTime, false);
+  const currentOpeningHours = customOpeningHours;
   const currentStatusInfo = useMemo(() => {
-    return getBusinessStatusInfo(currentOpeningHours);
-  }, [currentOpeningHours]);
+    return getBusinessStatusInfo(customOpeningHours);
+  }, [customOpeningHours]);
 
   const [isMounted, setIsMounted] = useState(false);
   const [todayStr, setTodayStr] = useState<string>('');
@@ -459,7 +465,8 @@ export default function TabletCensusPage() {
       categories: effectiveCategories,
       zone: selectedZone || 'Casco Histórico',
       address: address.trim() || `${selectedZone}, Cumaná, Estado Sucre`,
-      mapsUrl: `https://maps.google.com/?q=${encodeURIComponent(businessName + ' ' + selectedZone + ' Cumana')}`,
+      hasGps: hasGps,
+      mapsUrl: hasGps ? (mapsUrl.trim() || `https://maps.google.com/?q=${encodeURIComponent(businessName + ' ' + selectedZone + ' Cumana')}`) : '',
       rif: rif.trim() || undefined,
       acceptsCashea: acceptsCashea,
       isFeatured: isFeatured,
@@ -474,8 +481,8 @@ export default function TabletCensusPage() {
       reviewsCount: 1,
       heroImage: finalHeroImage,
       gallery: [],
-      isOpenNow: isBusinessOpen(isOpen24Hours ? '24 Horas' : formatOpeningHours(openTime, closeTime, false)),
-      openingHours: isOpen24Hours ? '24 Horas' : formatOpeningHours(openTime, closeTime, false),
+      isOpenNow: isBusinessOpen(customOpeningHours),
+      openingHours: customOpeningHours,
       isVerified: isVerified,
       status: status
     };
@@ -1061,14 +1068,57 @@ export default function TabletCensusPage() {
                 </div>
               </div>
 
-              {/* Selector Táctil Rápido de Sectores */}
+              {/* Selector Táctil Rápido de Sectores y Registro en Campo */}
               <div className="space-y-2.5 pt-3 border-t border-[#1e222b]">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <label className="text-[11px] font-bold uppercase tracking-wider text-slate-300 block">
                     Sector o Bahía de Cumaná *
                   </label>
-                  <span className="text-[10px] text-teal-400 font-mono-tabular">({structure.zones.length} sectores)</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-teal-400 font-mono-tabular">({structure.zones.length} sectores)</span>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingZone(!isAddingZone)}
+                      className="text-[10px] text-amber-400 hover:text-amber-300 font-bold underline cursor-pointer"
+                    >
+                      {isAddingZone ? 'Cerrar registro' : '+ Añadir nuevo sector'}
+                    </button>
+                  </div>
                 </div>
+
+                {/* Formulario rápido para añadir sector/dirección en la tablet */}
+                {isAddingZone && (
+                  <div className="p-3 rounded-2xl bg-teal-500/10 border border-teal-500/30 space-y-2 animate-in fade-in">
+                    <span className="text-[11px] font-bold text-teal-300 block">
+                      Registrar nuevo sector o dirección en la tablet:
+                    </span>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newZoneName}
+                        onChange={(e) => setNewZoneName(e.target.value)}
+                        placeholder="Ej: Av. Cancamure, Calle Blanco Fombona, Caigüire..."
+                        className="flex-1 px-3 py-2 bg-[#11141a] border border-teal-500/40 rounded-xl text-xs text-white font-bold focus:outline-none focus:border-teal-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const clean = newZoneName.trim();
+                          if (!clean) return;
+                          addZone(clean);
+                          setSelectedZone(clean);
+                          if (!address) setAddress(clean);
+                          setNewZoneName('');
+                          setIsAddingZone(false);
+                          setSyncNotice(`✓ Sector "${clean}" agregado y seleccionado.`);
+                        }}
+                        className="px-4 py-2 rounded-xl bg-teal-400 text-slate-950 font-black text-xs hover:bg-teal-300 cursor-pointer shadow-sm"
+                      >
+                        Añadir y Seleccionar
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Indicador Visual Destacado de Sector Activo + Selector Desplegable Sincronizado */}
                 <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-2xl bg-[#161920] border border-[#222630]">
@@ -1118,172 +1168,117 @@ export default function TabletCensusPage() {
                 </div>
               </div>
 
-              {/* Dirección / Punto de Referencia */}
-              <div className="pt-2">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-300 block mb-1">
-                  Dirección Exacta o Punto de Referencia Visual
-                </label>
+              {/* Dirección / Punto de Referencia con Datalist y Sugerencias */}
+              <div className="pt-2 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-300 block">
+                    Dirección Exacta o Punto de Referencia Visual
+                  </label>
+                  {selectedZone && (
+                    <button
+                      type="button"
+                      onClick={() => setAddress(selectedZone)}
+                      className="text-[10px] text-amber-400 hover:underline font-bold cursor-pointer"
+                    >
+                      Usar sector "{selectedZone}" como dirección
+                    </button>
+                  )}
+                </div>
+
                 <div className="relative">
                   <MapPin className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
+                    list="censo-registered-zones-list"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                     placeholder="Ej. Calle Bolívar diagonal a la Plaza Santa Inés, frente al semáforo..."
                     className="w-full pl-9 pr-3.5 py-2.5 bg-[#161920] border border-[#222630] rounded-xl text-xs text-white font-bold placeholder:text-slate-500 focus:outline-none focus:border-amber-400 transition-all"
                   />
                 </div>
+
+                <datalist id="censo-registered-zones-list">
+                  {structure.zones.map(z => (
+                    <option key={z} value={z} />
+                  ))}
+                </datalist>
+
+                {/* Sugerencias de Zonas Registradas */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  <span className="text-[10px] text-slate-400 font-semibold">Zonas registradas:</span>
+                  {structure.zones.slice(0, 8).map(z => (
+                    <button
+                      key={z}
+                      type="button"
+                      onClick={() => setAddress(prev => prev ? (prev.includes(z) ? prev : `${prev}, ${z}`) : z)}
+                      className="px-2 py-0.5 rounded-lg bg-[#161920] hover:bg-[#1f242e] text-[10px] font-bold text-slate-300 border border-[#222630] transition-all cursor-pointer"
+                    >
+                      + {z}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* SECCIÓN 2: HORARIO DE ATENCIÓN & ESTADO DINÁMICO (ABIERTO / CERRADO) */}
+            {/* SECCIÓN 2: HORARIO DE ATENCIÓN FLEXIBLE (LUNES A DOMINGO / FINES DE SEMANA) */}
             <div className="bg-[#11141a] rounded-3xl border border-[#1e222b] p-5 sm:p-7 shadow-sm space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1e222b] pb-3">
-                <h2 className="text-xs font-mono-tabular uppercase font-bold text-amber-400 tracking-wider flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-amber-400" />
-                  <span>2. Horario de Atención & Estado Dinámico</span>
-                </h2>
+              <BusinessHoursPicker
+                value={customOpeningHours}
+                onChange={setCustomOpeningHours}
+              />
+            </div>
 
-                {/* Indicador en vivo del estado según la hora de Cumaná */}
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold text-slate-400">Estado en este momento:</span>
-                  <span className={`px-2.5 py-1 rounded-xl text-xs font-black border flex items-center gap-1.5 shadow-xs font-mono-tabular ${
-                    currentStatusInfo.isOpen
-                      ? 'bg-emerald-950/60 text-emerald-400 border-emerald-500/30'
-                      : 'bg-rose-950/60 text-rose-400 border-rose-500/30'
-                  }`}>
-                    <span className={`w-2 h-2 rounded-full ${currentStatusInfo.isOpen ? 'bg-emerald-400' : 'bg-rose-500 animate-pulse'}`}></span>
-                    <span>{currentStatusInfo.cardBadge}</span>
-                  </span>
+            {/* SECCIÓN 3: GEOLOCALIZACIÓN POR GOOGLE MAPS (INTERRUPTOR ACTIVO / INACTIVO) */}
+            <div className="bg-[#11141a] rounded-3xl border border-[#1e222b] p-5 sm:p-7 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#1e222b] pb-3">
+                <div className="space-y-0.5">
+                  <h2 className="text-xs font-mono-tabular uppercase font-bold text-amber-400 tracking-wider flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-amber-400" />
+                    <span>Geolocalización por Google Maps</span>
+                  </h2>
+                  <p className="text-[11px] text-slate-400">
+                    Activa si el comercio cuenta con punto exacto en Google Maps o desactívalo para locales por dirección física
+                  </p>
                 </div>
-              </div>
-
-              {/* Selector Modo 24/7 o Rango de Horario */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsOpen24Hours(false)}
-                  className={`touch-manipulation p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between active:scale-95 ${
-                    !isOpen24Hours
-                      ? 'bg-amber-400/15 border-amber-400 text-white font-bold ring-1 ring-amber-400'
-                      : 'bg-[#161920] border-[#222630] text-slate-400'
-                  }`}
-                >
-                  <div>
-                    <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                      <Clock className="w-4 h-4 text-amber-400" />
-                      <span>Horario por Turno (ej. 7:00 AM a 8:00 PM)</span>
-                    </div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">
-                      Cambiará automáticamente a "Cerrado" al pasar la hora de cierre
-                    </div>
-                  </div>
-                  {!isOpen24Hours && <Check className="w-4 h-4 text-amber-400 stroke-[3]" />}
-                </button>
 
                 <button
                   type="button"
-                  onClick={() => setIsOpen24Hours(true)}
-                  className={`touch-manipulation p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-center justify-between active:scale-95 ${
-                    isOpen24Hours
-                      ? 'bg-amber-400/15 border-amber-400 text-white font-bold ring-1 ring-amber-400'
-                      : 'bg-[#161920] border-[#222630] text-slate-400'
+                  onClick={() => setHasGps(!hasGps)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-black border flex items-center gap-2 transition-all cursor-pointer shadow-xs ${
+                    hasGps
+                      ? 'bg-emerald-500 text-slate-950 border-emerald-400'
+                      : 'bg-[#161920] text-slate-400 border-[#222630]'
                   }`}
                 >
-                  <div>
-                    <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                      <Sparkles className="w-4 h-4 text-amber-400" />
-                      <span>Atención Continua 24 Horas (24/7)</span>
-                    </div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">
-                      Aparecerá siempre como "Abierto" en el directorio
-                    </div>
-                  </div>
-                  {isOpen24Hours && <Check className="w-4 h-4 text-amber-400 stroke-[3]" />}
+                  <span className={`w-2.5 h-2.5 rounded-full ${hasGps ? 'bg-slate-950' : 'bg-slate-500'}`} />
+                  <span>{hasGps ? 'GPS ACTIVO' : 'GPS INACTIVO'}</span>
                 </button>
               </div>
 
-              {!isOpen24Hours && (
-                <div className="space-y-3 pt-1">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
-                          Hora de Apertura *
-                        </label>
-                        <span className="text-xs font-mono-tabular font-bold text-emerald-400">
-                          {formatTimeTo12h(openTime)}
-                        </span>
-                      </div>
-                      <input
-                        type="time"
-                        value={openTime}
-                        onChange={(e) => setOpenTime(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-[#161920] border border-[#222630] rounded-xl text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-amber-400"
-                      />
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-[11px] font-bold uppercase tracking-wider text-slate-300">
-                          Hora de Cierre *
-                        </label>
-                        <span className="text-xs font-mono-tabular font-bold text-rose-400">
-                          {formatTimeTo12h(closeTime)}
-                        </span>
-                      </div>
-                      <input
-                        type="time"
-                        value={closeTime}
-                        onChange={(e) => setCloseTime(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-[#161920] border border-[#222630] rounded-xl text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-amber-400"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Botones de selección rápida táctil para la tablet en formato 12 horas AM/PM */}
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Plantillas AM/PM:</span>
-                    {[
-                      { label: '7:00 AM a 8:00 PM', open: '07:00', close: '20:00' },
-                      { label: '8:00 AM a 6:00 PM', open: '08:00', close: '18:00' },
-                      { label: '8:00 AM a 10:00 PM', open: '08:00', close: '22:00' },
-                      { label: '1:00 AM a 1:00 PM', open: '01:00', close: '13:00' },
-                      { label: '11:30 AM a 11:00 PM', open: '11:30', close: '23:00' },
-                    ].map(p => {
-                      const isMatch = openTime === p.open && closeTime === p.close && !isOpen24Hours;
-                      return (
-                        <button
-                          key={p.label}
-                          type="button"
-                          onClick={() => {
-                            setOpenTime(p.open);
-                            setCloseTime(p.close);
-                            setIsOpen24Hours(false);
-                          }}
-                          className={`touch-manipulation px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer active:scale-95 ${
-                            isMatch
-                              ? 'bg-amber-400 text-slate-950 border-amber-400 shadow-xs font-black'
-                              : 'bg-[#161920] hover:bg-[#1f242e] text-slate-300 border-[#222630]'
-                          }`}
-                        >
-                          {p.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+              {hasGps ? (
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-300 block">
+                    Enlace de Google Maps (Opcional - se generará automático si se deja vacío)
+                  </label>
+                  <input
+                    type="text"
+                    value={mapsUrl}
+                    onChange={(e) => setMapsUrl(e.target.value)}
+                    placeholder="https://maps.google.com/?q=..."
+                    className="w-full px-3.5 py-2.5 bg-[#161920] border border-[#222630] rounded-xl text-xs text-white font-bold placeholder:text-slate-500 focus:outline-none focus:border-amber-400 transition-all"
+                  />
+                  <p className="text-[10px] text-emerald-400 font-medium">
+                    ✓ El comercio mostrará mapa interactivo y botón "Abrir en Google Maps" en su ficha.
+                  </p>
+                </div>
+              ) : (
+                <div className="p-3.5 rounded-xl bg-[#161920] border border-dashed border-[#222630] text-xs text-slate-400 space-y-1">
+                  <span className="font-bold text-slate-200 block">Modo sin mapa satelital:</span>
+                  <p className="text-[11px]">
+                    El local se publicará sin recuadro de mapa. Los clientes se guiarán por su dirección física y botones directos de WhatsApp o llamada.
+                  </p>
                 </div>
               )}
-
-              <div className="p-3 rounded-2xl bg-[#161920] border border-[#222630] text-xs text-slate-300 flex items-center justify-between">
-                <div>
-                  <span className="font-bold text-slate-400">Horario a registrar: </span>
-                  <span className="font-mono-tabular font-extrabold text-amber-400">{currentOpeningHours}</span>
-                </div>
-                <div className="text-[11px] font-semibold text-slate-400">
-                  {isOpen24Hours ? 'Operación 24/7' : `Cierra a las ${formatTimeTo12h(closeTime)} y cambia a Cerrado`}
-                </div>
-              </div>
             </div>
 
             {/* SECCIÓN 3: RESPALDO OPERATIVO & COMODIDADES (BOTONES TÁCTILES) */}

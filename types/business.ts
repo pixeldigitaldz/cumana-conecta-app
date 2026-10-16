@@ -105,6 +105,7 @@ export interface Business {
   phone?: string;          // Teléfono directo para llamadas o fichas
   email?: string;          // Correo electrónico de contacto
   coordinates?: string;    // Coordenadas GPS ej: '10.4536° N, 64.1775° W'
+  hasGps?: boolean;        // ¿Dispone de geolocalización por Google Maps interactiva?
   hasBranches?: boolean;   // ¿Tiene sucursales activas en Cumaná / Edo. Sucre?
   isMultiBranch?: boolean; // Marca explícita para la vista de cadena multi-sede
   isFeatured?: boolean;    // Comercio destacado oficial

@@ -109,6 +109,7 @@ import { isBusinessOpen, getBusinessStatusInfo } from '@/lib/business-hours';
 import { SingleImageUploader, GalleryImageUploader } from '@/components/image-uploader';
 import { BranchManager } from '@/components/branch-manager';
 import { BusinessMiniMap } from '@/components/business-mini-map';
+import { BusinessHoursPicker } from '@/components/business-hours-picker';
 
 type AdminTab = 'businesses' | 'new-business' | 'videoroutes' | 'plans' | 'structure' | 'cumana-conecta' | 'verification-requests' | 'ads' | 'home-sections' | 'kpis' | 'emergencias';
 
@@ -320,6 +321,7 @@ export default function AdminDashboardPage() {
     isOpenNow: true,
     openingHours: '8:00 AM - 6:00 PM',
     isVerified: false,
+    hasGps: true,
     status: 'active',
     paymentMethods: ['pago_movil', 'efectivo_usd'],
     amenities: ['planta_electrica'],
@@ -332,6 +334,8 @@ export default function AdminDashboardPage() {
   // Estados locales para nueva categoría / nueva zona
   const [newCatInput, setNewCatInput] = useState('');
   const [newZoneInput, setNewZoneInput] = useState('');
+  const [quickZoneInput, setQuickZoneInput] = useState('');
+  const [isAddingQuickZone, setIsAddingQuickZone] = useState(false);
 
   // Estado del formulario de Configuración Oficial de Cumaná Conecta
   const [platformForm, setPlatformForm] = useState({
@@ -429,6 +433,7 @@ export default function AdminDashboardPage() {
       isOpenNow: b.isOpenNow,
       openingHours: b.openingHours,
       isVerified: b.isVerified,
+      hasGps: b.hasGps !== false,
       status: b.status,
       paymentMethods: [...b.paymentMethods],
       amenities: [...b.amenities],
@@ -442,11 +447,13 @@ export default function AdminDashboardPage() {
   const handleStartCreate = () => {
     setEditingId(null);
     const defaultCat = structure.categories[0] || 'Gastronomía & Asadores';
+    const defaultZone = structure.zones[0] || 'Casco Histórico';
     setFormData({
       ...initialFormState,
       category: defaultCat,
       categories: [defaultCat],
-      zone: structure.zones[0] || 'Casco Histórico'
+      zone: defaultZone,
+      hasGps: true
     });
     setGalleryInput('');
     setIsEditModalOpen(true);
@@ -1150,20 +1157,70 @@ export default function AdminDashboardPage() {
           )}
         </div>
 
-        {/* Sector Geográfico o Bahía */}
-        <div>
-          <label className="text-xs font-bold text-slate-900 dark:text-white block mb-1">
-            Sector Geográfico o Bahía *
-          </label>
-          <select
-            value={formData.zone}
-            onChange={(e) => setFormData({ ...formData, zone: e.target.value })}
-            className="w-full px-4 py-3 bg-slate-50 dark:bg-[#080E18] border border-slate-200 dark:border-[#1E2D45] rounded-xl text-xs text-slate-950 dark:text-white font-bold focus:outline-none focus:border-[#FF6B4A]"
-          >
-            {structure.zones.map(z => (
-              <option key={z} value={z}>{z}</option>
-            ))}
-          </select>
+        {/* Sector Geográfico o Bahía y Registro Rápido */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold text-slate-900 dark:text-white block">
+              Sector Geográfico o Bahía de Cumaná *
+            </label>
+            <button
+              type="button"
+              onClick={() => setIsAddingQuickZone(!isAddingQuickZone)}
+              className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>{isAddingQuickZone ? 'Cerrar registro rápido' : '+ Añadir nuevo sector / dirección'}</span>
+            </button>
+          </div>
+
+          <div className="flex gap-2">
+            <select
+              value={formData.zone}
+              onChange={(e) => setFormData({ ...formData, zone: e.target.value })}
+              className="flex-1 px-4 py-3 bg-slate-50 dark:bg-[#080E18] border border-slate-200 dark:border-[#1E2D45] rounded-xl text-xs text-slate-950 dark:text-white font-bold focus:outline-none focus:border-[#FF6B4A]"
+            >
+              {structure.zones.map(z => (
+                <option key={z} value={z}>{z}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Formulario desplegable para agregar nuevo sector/dirección al instante */}
+          {isAddingQuickZone && (
+            <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-2 animate-in fade-in duration-150">
+              <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 block">
+                Registrar nuevo sector o dirección en la base de datos oficial:
+              </span>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={quickZoneInput}
+                  onChange={(e) => setQuickZoneInput(e.target.value)}
+                  placeholder="Ej: Av. Cancamure, Calle Blanco Fombona, Caigüire..."
+                  className="flex-1 px-3 py-2 bg-white dark:bg-[#080E18] border border-emerald-500/40 rounded-xl text-xs text-slate-900 dark:text-white font-medium focus:outline-none focus:border-emerald-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const clean = quickZoneInput.trim();
+                    if (!clean) return;
+                    addZone(clean);
+                    setFormData(prev => ({
+                      ...prev,
+                      zone: clean,
+                      address: prev.address ? prev.address : clean
+                    }));
+                    setQuickZoneInput('');
+                    setIsAddingQuickZone(false);
+                    showNotice(`Sector "${clean}" agregado a la base de datos y seleccionado.`);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs transition-all cursor-pointer shadow-sm"
+                >
+                  Guardar y Seleccionar
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div>
@@ -1192,129 +1249,175 @@ export default function AdminDashboardPage() {
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs font-bold text-slate-900 dark:text-white block mb-1">
-              Dirección Física Completa
+        {/* Dirección Física Completa con Datalist de Zonas y Atajos */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold text-slate-900 dark:text-white block">
+              Dirección Física Completa *
             </label>
-            <input
-              type="text"
-              value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              placeholder="Av. Universidad cruce con Costanera Los Bordones"
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-[#080E18] border border-slate-200 dark:border-[#1E2D45] rounded-xl text-xs text-slate-950 dark:text-white focus:outline-none focus:border-[#FF6B4A]"
-            />
+            {formData.zone && (
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, address: prev.zone }))}
+                className="text-[10px] text-amber-500 hover:underline font-bold cursor-pointer"
+              >
+                Usar "{formData.zone}" como dirección base
+              </button>
+            )}
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-900 dark:text-white block">
-                Horario de Atención (Apertura y Cierre)
-              </label>
-              {(() => {
-                const status = getBusinessStatusInfo(formData.openingHours);
-                return (
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 ${
-                    status.isOpen
-                      ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30'
-                      : 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30'
-                  }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${status.isOpen ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
-                    <span>{status.cardBadge} (Ahora)</span>
-                  </span>
-                );
-              })()}
-            </div>
+          <input
+            type="text"
+            list="admin-registered-zones-list"
+            value={formData.address}
+            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            placeholder="Escribe la dirección o selecciona de la lista..."
+            className="w-full px-4 py-3 bg-slate-50 dark:bg-[#080E18] border border-slate-200 dark:border-[#1E2D45] rounded-xl text-xs text-slate-950 dark:text-white font-medium focus:outline-none focus:border-[#FF6B4A]"
+          />
 
-            <input
-              type="text"
-              value={formData.openingHours}
-              onChange={(e) => setFormData({ ...formData, openingHours: e.target.value })}
-              placeholder="7:00 AM a 8:00 PM / 24 Horas"
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-[#080E18] border border-slate-200 dark:border-[#1E2D45] rounded-xl text-xs text-slate-950 dark:text-white font-bold focus:outline-none focus:border-[#FF6B4A]"
-            />
+          <datalist id="admin-registered-zones-list">
+            {structure.zones.map(z => (
+              <option key={z} value={z} />
+            ))}
+          </datalist>
 
-            {/* Atajos de Horarios habituales en Cumaná (Formato 12 horas AM / PM) */}
-            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-              <span className="text-[10px] text-slate-500 dark:text-[#A0AEC0] font-semibold">Atajos:</span>
-              {[
-                '7:00 AM a 8:00 PM',
-                '8:00 AM a 6:00 PM',
-                '8:00 AM a 10:00 PM',
-                '1:00 AM a 1:00 PM',
-                '24 Horas'
-              ].map(preset => (
-                <button
-                  key={preset}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, openingHours: preset })}
-                  className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
-                    formData.openingHours === preset
-                      ? 'bg-[#FF6B4A] text-white border-[#FF6B4A]'
-                      : 'bg-slate-100 hover:bg-slate-200 dark:bg-[#080E18] dark:hover:bg-[#1E2D45] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-[#1E2D45]'
-                  }`}
-                >
-                  {preset}
-                </button>
-              ))}
-            </div>
-            <p className="text-[10px] text-slate-500 dark:text-[#A0AEC0]">
-              💡 Horario en formato 12 horas (ej. "7:00 AM a 8:00 PM" o "1:00 AM a 1:00 PM"). Al pasar la hora de cierre se colocará como "Cerrado" automáticamente. Los locales "24 Horas" saldrán siempre abiertos.
-            </p>
+          {/* Sugerencias de direcciones y zonas registradas en el panel */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
+              Sugerencias de zonas registradas:
+            </span>
+            {structure.zones.slice(0, 10).map(z => (
+              <button
+                key={z}
+                type="button"
+                onClick={() => setFormData(prev => ({
+                  ...prev,
+                  address: prev.address ? (prev.address.includes(z) ? prev.address : `${prev.address}, ${z}`) : z
+                }))}
+                className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-[#161c26] dark:hover:bg-[#202736] text-[10px] font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#242c3d] transition-all cursor-pointer"
+              >
+                + {z}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="text-xs font-bold text-slate-900 dark:text-white block mb-1">
-              Enlace de Google Maps (Ubicación exacta)
-            </label>
-            <input
-              type="text"
-              value={formData.mapsUrl}
-              onChange={(e) => setFormData({ ...formData, mapsUrl: e.target.value })}
-              placeholder="https://maps.google.com/?q=..."
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-[#080E18] border border-slate-200 dark:border-[#1E2D45] rounded-xl text-xs text-slate-950 dark:text-white focus:outline-none focus:border-[#FF6B4A]"
-            />
+        {/* Configurador Inteligente y Flexible de Horarios (Lunes a Domingo / Fin de Semana) */}
+        <div className="pt-2">
+          <BusinessHoursPicker
+            value={formData.openingHours}
+            onChange={(newHours) => setFormData(prev => ({ ...prev, openingHours: newHours }))}
+          />
+        </div>
 
-            {/* Vista Previa del Mapa de Ubicación en Tiempo Real */}
-            <div className="mt-2.5 p-3 rounded-2xl bg-slate-50 dark:bg-[#080E18] border border-slate-200 dark:border-[#1E2D45] space-y-2">
-              <div className="flex items-center justify-between text-[11px] font-bold">
-                <span className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200">
-                  <MapPin className="w-3.5 h-3.5 text-[#FF6B4A]" />
-                  <span>Vista Previa del Mapa en Cumaná</span>
-                </span>
-                <span className="text-[10px] font-mono-tabular text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                  {formData.zone || 'Cumaná'}
+        {/* Control de Geolocalización Satelital Google Maps (Interruptor Activar / Desactivar) */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#131924] border border-slate-200 dark:border-[#1E2536] space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-[#FF6B4A]" />
+                <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                  Geolocalización por Google Maps
                 </span>
               </div>
-              <BusinessMiniMap
-                business={{
-                  name: formData.name || 'Local',
-                  address: formData.address || 'Cumaná, Estado Sucre',
-                  zone: formData.zone || 'Sector Centro',
-                  mapsUrl: formData.mapsUrl,
-                  coordinates: formData.coordinates
-                }}
-                heightClass="h-36 sm:h-44"
-                showDirectionsButton={false}
-              />
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Determina si este comercio mostrará mapa satelital interactivo y navegación por satélite
+              </p>
+            </div>
+
+            {/* Botón interruptor tipo Switch */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, hasGps: prev.hasGps === false ? true : false }))}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-black border flex items-center gap-2 transition-all cursor-pointer shadow-xs ${
+                  formData.hasGps !== false
+                    ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-emerald-500/20'
+                    : 'bg-slate-200 dark:bg-[#1c2230] text-slate-600 dark:text-slate-400 border-slate-300 dark:border-[#2a3449]'
+                }`}
+              >
+                <span className={`w-2.5 h-2.5 rounded-full ${formData.hasGps !== false ? 'bg-slate-950' : 'bg-slate-500'}`} />
+                <span>{formData.hasGps !== false ? 'GPS ACTIVO' : 'GPS INACTIVO'}</span>
+              </button>
             </div>
           </div>
 
-          <div>
-            <label className="text-xs font-bold text-slate-900 dark:text-white block mb-1 flex items-center justify-between">
-              <span>Número de RIF Comercial (Opcional)</span>
-              <span className="text-[10px] text-[#FFA384] font-semibold">Ej: J-505563599</span>
-            </label>
-            <input
-              type="text"
-              value={formData.rif || ''}
-              onChange={(e) => setFormData({ ...formData, rif: e.target.value.toUpperCase() })}
-              placeholder="J-505563599 o V-12345678-0"
-              className="w-full px-4 py-3 bg-slate-50 dark:bg-[#080E18] border border-slate-200 dark:border-[#1E2D45] rounded-xl text-xs text-slate-950 dark:text-white font-bold tracking-wider focus:outline-none focus:border-[#FF6B4A]"
-            />
-          </div>
+          {/* Si el GPS está activo: mostrar enlace de Google Maps y preview de mini-mapa */}
+          {formData.hasGps !== false ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100 dark:border-[#1E2536]">
+              <div>
+                <label className="text-xs font-bold text-slate-900 dark:text-white block mb-1">
+                  Enlace de Google Maps (Ubicación exacta)
+                </label>
+                <input
+                  type="text"
+                  value={formData.mapsUrl}
+                  onChange={(e) => setFormData({ ...formData, mapsUrl: e.target.value })}
+                  placeholder="https://maps.google.com/?q=..."
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-[#080E18] border border-slate-200 dark:border-[#1E2D45] rounded-xl text-xs text-slate-950 dark:text-white focus:outline-none focus:border-[#FF6B4A]"
+                />
+
+                {/* Vista Previa del Mapa de Ubicación en Tiempo Real */}
+                <div className="mt-2.5 p-3 rounded-2xl bg-slate-50 dark:bg-[#080E18] border border-slate-200 dark:border-[#1E2D45] space-y-2">
+                  <div className="flex items-center justify-between text-[11px] font-bold">
+                    <span className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200">
+                      <MapPin className="w-3.5 h-3.5 text-[#FF6B4A]" />
+                      <span>Vista Previa del Mapa en Cumaná</span>
+                    </span>
+                    <span className="text-[10px] font-mono-tabular text-emerald-600 dark:text-emerald-400 font-extrabold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                      {formData.zone || 'Cumaná'}
+                    </span>
+                  </div>
+                  <BusinessMiniMap
+                    business={{
+                      name: formData.name || 'Local',
+                      address: formData.address || 'Cumaná, Estado Sucre',
+                      zone: formData.zone || 'Sector Centro',
+                      mapsUrl: formData.mapsUrl,
+                      coordinates: formData.coordinates
+                    }}
+                    heightClass="h-36 sm:h-44"
+                    showDirectionsButton={false}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-900 dark:text-white block mb-1 flex items-center justify-between">
+                  <span>Número de RIF Comercial (Opcional)</span>
+                  <span className="text-[10px] text-[#FFA384] font-semibold">Ej: J-505563599</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.rif || ''}
+                  onChange={(e) => setFormData({ ...formData, rif: e.target.value.toUpperCase() })}
+                  placeholder="J-505563599 o V-12345678-0"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-[#080E18] border border-slate-200 dark:border-[#1E2D45] rounded-xl text-xs text-slate-950 dark:text-white font-bold tracking-wider focus:outline-none focus:border-[#FF6B4A]"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 rounded-xl bg-slate-100 dark:bg-[#0c1017] border border-dashed border-slate-300 dark:border-[#222a3b] flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+              <div className="space-y-1">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
+                  Modo sin mapa activo: Se priorizará la dirección física y pedidos por WhatsApp
+                </span>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  El comercio se publicará sin recuadro de mapa satelital. Los clientes verán su dirección escrita y canales directos.
+                </p>
+              </div>
+
+              <div className="w-full sm:w-auto">
+                <input
+                  type="text"
+                  value={formData.rif || ''}
+                  onChange={(e) => setFormData({ ...formData, rif: e.target.value.toUpperCase() })}
+                  placeholder="RIF Comercial (Opcional)"
+                  className="w-full sm:w-56 px-3 py-2 bg-white dark:bg-[#131924] border border-slate-200 dark:border-[#1E2D45] rounded-xl text-xs text-slate-950 dark:text-white font-bold tracking-wider focus:outline-none focus:border-[#FF6B4A]"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Gestor de Sedes y Guías de Llegada para Choferes (Multi-Sede Universal) */}

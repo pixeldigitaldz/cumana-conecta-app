@@ -72,10 +72,72 @@ export function is24HoursSchedule(openingHours?: string | null): boolean {
 }
 
 /**
+ * Obtiene el día de la semana actual en Cumaná (0 = Domingo, 1 = Lunes, ..., 6 = Sábado).
+ */
+export function getCaracasDayOfWeek(): number {
+  if (typeof window === 'undefined') return 1; // Lunes por defecto en SSR
+  try {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Caracas',
+      weekday: 'short'
+    });
+    const dayStr = formatter.format(now).toLowerCase();
+    if (dayStr.startsWith('sun')) return 0;
+    if (dayStr.startsWith('mon')) return 1;
+    if (dayStr.startsWith('tue')) return 2;
+    if (dayStr.startsWith('wed')) return 3;
+    if (dayStr.startsWith('thu')) return 4;
+    if (dayStr.startsWith('fri')) return 5;
+    if (dayStr.startsWith('sat')) return 6;
+    return now.getDay();
+  } catch {
+    return new Date().getDay();
+  }
+}
+
+function dayMatchesSchedule(dayOfWeek: number, text: string): boolean {
+  const s = text.toLowerCase();
+  if (s.includes('todos los d') || s.includes('lunes a domingo') || s.includes('diario') || s.includes('24')) return true;
+  if ((s.includes('lunes a s') || s.includes('lun a sab')) && dayOfWeek >= 1 && dayOfWeek <= 6) return true;
+  if ((s.includes('lunes a v') || s.includes('lun a vie')) && dayOfWeek >= 1 && dayOfWeek <= 5) return true;
+  if ((s.includes('martes a d') || s.includes('mar a dom')) && (dayOfWeek >= 2 || dayOfWeek === 0)) return true;
+  if ((s.includes('martes a s') || s.includes('mar a sab')) && dayOfWeek >= 2 && dayOfWeek <= 6) return true;
+  if ((s.includes('martes a v') || s.includes('mar a vie')) && dayOfWeek >= 2 && dayOfWeek <= 5) return true;
+  if (s.includes('fin de semana') && (dayOfWeek === 6 || dayOfWeek === 0)) return true;
+  if ((s.includes('sábado y domingo') || s.includes('sabado y domingo')) && (dayOfWeek === 6 || dayOfWeek === 0)) return true;
+  if ((s.includes('sábado') || s.includes('sabado')) && dayOfWeek === 6) return true;
+  if (s.includes('domingo') && dayOfWeek === 0) return true;
+  if (s.includes('lunes') && dayOfWeek === 1) return true;
+  if (s.includes('martes') && dayOfWeek === 2) return true;
+  if ((s.includes('miércoles') || s.includes('miercoles')) && dayOfWeek === 3) return true;
+  if (s.includes('jueves') && dayOfWeek === 4) return true;
+  if (s.includes('viernes') && dayOfWeek === 5) return true;
+  return false;
+}
+
+function parseAndEvaluateTimeRange(rangeStr: string, currentMin: number): boolean {
+  const parts = rangeStr.split(/\s*[-–—]|(?:\s+a\s+)|\s+to\s+|\s+hasta\s+/i);
+  if (parts.length < 2) return true;
+
+  const startMin = parseTimeToMinutes(parts[0]);
+  const endMin = parseTimeToMinutes(parts[1]);
+
+  if (startMin === null || endMin === null) return true;
+
+  if (startMin <= endMin) {
+    return currentMin >= startMin && currentMin <= endMin;
+  } else {
+    // Nocturno cruzando medianoche (ej: 8:00 PM a 3:00 AM)
+    return currentMin >= startMin || currentMin <= endMin;
+  }
+}
+
+/**
  * Determina si un local está abierto en el momento actual (o en unos minutos específicos dados).
  */
 export function isBusinessOpen(openingHours?: string | null, customMinutes?: number): boolean {
-  if (!openingHours) return true; // Si no tiene horario especificado, se asume disponible
+  if (!openingHours || !openingHours.trim()) return true; // Si no tiene horario especificado, se asume disponible
 
   // Los que trabajan 24/7 siempre saldrán como abiertos
   if (is24HoursSchedule(openingHours)) {
@@ -87,29 +149,46 @@ export function isBusinessOpen(openingHours?: string | null, customMinutes?: num
     return true;
   }
 
-  // Limpiar prefijos habituales ("de lunes a domingo:", "de ", etc.)
-  const stripped = openingHours
-    .replace(/^(?:lunes a [a-z]+:?|de\s+)/i, '')
-    .trim();
-
-  // Separar hora inicial y final por guión o palabras de rango
-  const parts = stripped.split(/\s*[-–—]|(?:\s+a\s+)|\s+to\s+|\s+hasta\s+/i);
-  if (parts.length < 2) return true;
-
-  const startMin = parseTimeToMinutes(parts[0]);
-  const endMin = parseTimeToMinutes(parts[1]);
-
-  if (startMin === null || endMin === null) return true;
-
   const currentMin = customMinutes !== undefined ? customMinutes : getCaracasCurrentMinutes();
+  const currentDay = getCaracasDayOfWeek();
 
-  // Rango diurno habitual (ej: 07:00 a 20:00 -> 420 a 1200 minutos)
-  if (startMin <= endMin) {
-    return currentMin >= startMin && currentMin <= endMin;
-  } else {
-    // Rango nocturno cruzando medianoche (ej: 20:00 a 03:00 -> de noche hasta la madrugada)
-    return currentMin >= startMin || currentMin <= endMin;
+  // Si tiene múltiples tramos separados por | o ·
+  if (openingHours.includes('|') || openingHours.includes('·')) {
+    const segments = openingHours.split(/[|·]/).map(s => s.trim()).filter(Boolean);
+    const matchingSegment = segments.find(seg => dayMatchesSchedule(currentDay, seg));
+
+    if (matchingSegment) {
+      if (matchingSegment.toLowerCase().includes('cerrado')) {
+        return false;
+      }
+      const colonIdx = matchingSegment.indexOf(':');
+      const timePart = colonIdx !== -1 ? matchingSegment.slice(colonIdx + 1).trim() : matchingSegment;
+      return parseAndEvaluateTimeRange(timePart, currentMin);
+    }
+
+    // Si hay tramos específicos para otros días pero ninguno para hoy, significa que hoy no abre
+    const hasAnyDaySpec = segments.some(seg => 
+      /lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo/i.test(seg)
+    );
+    if (hasAnyDaySpec) {
+      return false;
+    }
   }
+
+  // Si no tiene tubería |, verificar si tiene prefijo de días (ej. "Lunes a Viernes: 8:00 AM - 6:00 PM")
+  if (openingHours.includes(':') && /lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo/i.test(openingHours)) {
+    const colonIdx = openingHours.indexOf(':');
+    const daySpec = openingHours.slice(0, colonIdx);
+    const timeSpec = openingHours.slice(colonIdx + 1);
+
+    if (!dayMatchesSchedule(currentDay, daySpec)) {
+      return false; // Hoy no corresponde a los días de atención
+    }
+    return parseAndEvaluateTimeRange(timeSpec, currentMin);
+  }
+
+  // Caso directo sin días explícitos (ej. "7:00 AM a 8:00 PM")
+  return parseAndEvaluateTimeRange(openingHours, currentMin);
 }
 
 /**

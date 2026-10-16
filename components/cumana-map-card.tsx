@@ -106,6 +106,48 @@ export function CumanaMapCard({ business, className = '' }: CumanaMapCardProps) 
     return `https://www.openstreetmap.org/export/embed.html?bbox=${minLng}%2C${minLat}%2C${maxLng}%2C${maxLat}&layer=${layer}&marker=${currentCoords.lat}%2C${currentCoords.lng}`;
   }, [currentCoords, zoomLevel, isSatellite]);
 
+  if (business.hasGps === false) {
+    return (
+      <div className={`bg-white dark:bg-[#131F33] rounded-3xl border border-slate-200 dark:border-[#1E2D45] p-5 sm:p-6 shadow-sm space-y-4 ${className}`}>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-[#1E2D45]">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 shrink-0">
+                <MapPin className="w-4 h-4" />
+              </div>
+              <h3 className="text-base sm:text-lg font-black text-slate-950 dark:text-white tracking-tight">
+                Ubicación en Cumaná
+              </h3>
+            </div>
+            <p className="text-xs text-slate-600 dark:text-[#A0AEC0] font-medium leading-snug pl-9">
+              {business.address}
+            </p>
+          </div>
+          <span className="self-start sm:self-auto px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 text-xs font-bold">
+            GPS Inactivo · Dirección Física
+          </span>
+        </div>
+
+        <div className="p-6 rounded-2xl bg-slate-50 dark:bg-[#0c1017] border border-dashed border-slate-200 dark:border-[#222a3b] flex flex-col items-center justify-center text-center space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
+            <MapPin className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Sector: {business.zone}
+            </span>
+            <p className="text-sm font-bold text-slate-900 dark:text-white max-w-md">
+              {business.address}
+            </p>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
+            Este comercio no cuenta con geolocalización satelital activa en Google Maps. Su atención se realiza presencialmente en su dirección física o por canales de contacto directo.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`bg-white dark:bg-[#131F33] rounded-3xl border border-slate-200 dark:border-[#1E2D45] p-5 sm:p-6 shadow-sm space-y-4 ${className}`}>
       {/* 1. Cabecera Exacta a la Imagen de Referencia */}
